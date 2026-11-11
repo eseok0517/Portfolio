@@ -3,18 +3,18 @@
   "short_name": "ES Portfolio",
   "icons": [
     {
-      "src": "/android-chrome-192x192.png?v=r3d2e46a3",
+      "src": "/android-chrome-192x192.png?v=g7m5s2u1",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/android-chrome-512x512.png?v=r3d2e46a3",
+      "src": "/android-chrome-512x512.png?v=g7m5s2u1",
       "sizes": "512x512",
       "type": "image/png"
     }
   ],
-  "theme_color": "#c8102e",
-  "background_color": "#fbf8f8",
+  "theme_color": "#18453b",
+  "background_color": "#f8faf9",
   "display": "standalone",
   "start_url": "/",
   "scope": "/"
