@@ -15,7 +15,7 @@ async function macroPreview(){
  if(!r.ok)throw Error('Macro data unavailable');const d=await r.json(),rows=d.monthly.filter(r=>r.sp500!=null);if(rows.length<2)return;
  const W=460,H=170,pad=12,low=Math.min(...rows.map(r=>r.sp500)),hi=Math.max(...rows.map(r=>r.sp500));
  const points=rows.map((r,i)=>`${pad+(W-2*pad)*i/(rows.length-1)},${H-pad-(H-2*pad)*(r.sp500-low)/(hi-low||1)}`).join(' ');
- document.getElementById('macro-chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="S and P 500 month-end level from ${rows[0].month} to ${rows.at(-1).month}"><path d="M${pad} ${H-pad}H${W-pad}" fill="none" stroke="#bfcdc7"/><polyline points="${points}" fill="none" stroke="#1f7a54" stroke-width="2.2"/></svg>`;
+ document.getElementById('macro-chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="S and P 500 month-end level from ${rows[0].month} to ${rows.at(-1).month}"><path d="M${pad} ${H-pad}H${W-pad}" fill="none" stroke="#bfcdc7"/><polyline points="${points}" fill="none" stroke="#1a6247" stroke-width="2.2"/></svg>`;
  document.getElementById('macro-period').textContent=`${rows[0].month}–${rows.at(-1).month} · ${rows.length} completed monthly observations · price index`;
  const inv=d.stats.curve_regime.find(x=>x.regime==='Inverted'),normal=d.stats.curve_regime.find(x=>x.regime==='Normal');
  if(inv&&normal)document.getElementById('macro-finding').textContent=`The S&P 500 gained an average of ${inv.mean_fwd12.toFixed(1)}% over the following year after inverted yield-curve months, compared with ${normal.mean_fwd12.toFixed(1)}% after normal yield-curve months.`;
