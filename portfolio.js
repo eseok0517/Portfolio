@@ -21,3 +21,18 @@ async function macroPreview(){
  if(inv&&normal)document.getElementById('macro-finding').textContent=`The S&P 500 gained an average of ${inv.mean_fwd12.toFixed(1)}% over the following year after inverted yield-curve months, compared with ${normal.mean_fwd12.toFixed(1)}% after normal yield-curve months.`;
 }
 purchasingPreview().catch(()=>{});macroPreview().catch(()=>{});
+
+(function(){const els=document.querySelectorAll('.rc-viz');if(!els.length)return;
+ const show=e=>e.classList.add('in');
+ if(!('IntersectionObserver'in window)){els.forEach(show);return}
+ const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){show(x.target);io.unobserve(x.target)}}),{threshold:.35});els.forEach(e=>io.observe(e));})();
+async function macroMonths(){
+ const box=document.getElementById('rc-months');if(!box)return;
+ const r=await fetch('data/macro_results.json',{cache:'no-store'});if(!r.ok)return;const d=await r.json(),rows=d.monthly.filter(m=>m.curve_regime);if(!rows.length)return;
+ box.style.gridTemplateColumns='repeat('+rows.length+',1fr)';document.getElementById('rc-ends').innerHTML='<span>'+rows[0].month.slice(0,4)+'</span><span>'+rows.at(-1).month.slice(0,4)+'</span>';
+ box.innerHTML=rows.map((m,i)=>'<i style="--i:'+i+'" class="'+(m.curve_regime==='Inverted'?'inv':'')+'" title="'+m.month+'"></i>').join('');
+ const n=rows.filter(m=>m.curve_regime==='Inverted').length;
+ document.getElementById('rc-macro-count').textContent=rows.length+' months';
+ document.getElementById('rc-macro-inv').textContent='Inverted curve ('+n+' months, one run)';
+}
+macroMonths().catch(()=>{});
