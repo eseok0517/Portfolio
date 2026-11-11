@@ -136,3 +136,12 @@ table.summary{width:100%;border-collapse:collapse;font-size:13px;min-width:760px
 
 .months{gap:1px}.months i{aspect-ratio:auto;height:22px;border-radius:1px}
 .months-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:-6px}
+
+.scale-strip{display:grid;grid-template-columns:repeat(4,1fr);margin-top:24px;background:var(--accent);color:#fff;border-radius:8px;overflow:hidden}
+.scale-strip div{padding:20px 22px;border-left:1px solid rgba(255,255,255,.18)}
+.scale-strip div:first-child{border-left:0}
+.scale-strip b{display:block;font:400 clamp(26px,3.2vw,38px)/1.05 Georgia,'Times New Roman',serif;letter-spacing:-.02em}
+.scale-strip span{display:block;margin-top:6px;font-size:12px;opacity:.85;line-height:1.35}
+.rc-shot{margin:0 0 14px;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:#fff}
+.rc-shot img{display:block;width:100%;height:auto}
+@media(max-width:700px){.scale-strip{grid-template-columns:1fr 1fr}.scale-strip div:nth-child(3){border-left:0}.scale-strip div:nth-child(n+3){border-top:1px solid rgba(255,255,255,.18)}}
