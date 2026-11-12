@@ -23,7 +23,6 @@ async function macroPreview(){
  ends.sort((a,b)=>a.y-b.y);for(let i=1;i<ends.length;i++)if(ends[i].y-ends[i-1].y<9)ends[i].y=ends[i-1].y+9;
  ends.forEach(e=>{svg+=`<text x="${W-pr+4}" y="${e.y+3}" font-size="9" font-weight="700" fill="${cols[e.s]||'#555'}">${e.s}</text>`});
  document.getElementById('macro-chart').innerHTML=svg+'</svg>';
- document.getElementById('macro-period').textContent=`${d.months[start]} to ${d.months.at(-1)} · month-end prices, dividends reinvested where available · $100 invested at the start`;
  const f=Object.fromEntries(series.map(x=>[x.s,x.v.at(-1)])),fm=v=>'$'+Math.round(v).toLocaleString('en-US');
  if(f.NVDA&&f.SPY&&f.TLT)document.getElementById('macro-finding').textContent=`Over this period $100 grew to ${fm(f.SPY)} in SPY, ${fm(f.NVDA)} in NVDA and ${fm(f.TLT)} in TLT, so the same market produced very different paths.`;
 }
