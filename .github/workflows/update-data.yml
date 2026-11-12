@@ -18,8 +18,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Fetch public data and rebuild results
+      - name: Fetch public data and rebuild macro results
         run: python scripts/fetch_macro.py --out data
+
+      - name: Fetch stock and ETF prices
+        run: python scripts/fetch_equities.py --out data
 
       - name: Commit changes
         run: |
