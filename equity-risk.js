@@ -85,7 +85,6 @@ function regimes(S){
  $('reg').innerHTML=S.map(function(x){var c=function(f){return show(cells(x.sym,f))};
   return '<tr><td><b>'+x.sym+'</b></td><td class="n">'+c(function(i){return curve[i]!=null&&curve[i]<0?1:null})+'</td><td class="n">'+c(function(i){return curve[i]!=null&&curve[i]>=0?1:null})+'</td><td class="n">'+c(function(i){return cpi[i]!=null&&cpi[i]>=3?1:null})+'</td><td class="n">'+c(function(i){return cpi[i]!=null&&cpi[i]<3?1:null})+'</td></tr>'}).join('');
  $('regSub').textContent='Average 12-month price return starting from months in each regime, over the full downloaded history (not the period selected above).';
- $('regNote').textContent='The yield curve was inverted in '+ep+' separate episode'+(ep===1?'':'s')+' in this sample, so each inverted-curve average reflects very few independent events, and 12-month windows overlap. Treat these as descriptions of history, not forecasts.';
 }
 
 /* ---------- portfolio ---------- */
