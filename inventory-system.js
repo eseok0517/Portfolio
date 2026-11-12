@@ -76,7 +76,7 @@ function compute(){
   i._mu=isFinite(i.usage)&&i.usage!==null&&i.usage!==''?+i.usage:o.out90/months;
   i._rp=Math.ceil((+i.lead||0)*i._mu);
   i._st=i._cur<=0?'OUT':(i._rp>0&&i._cur<=i._rp)?'REORDER':'OK';
-  i._sug=i._st==='OK'?0:Math.max(0,Math.ceil(i._mu*((+i.lead||0)+1)-i._cur))});
+  i._dos=i._mu>0?Math.max(0,i._cur)/(i._mu/30):Infinity;i._sug=i._st==='OK'?0:Math.max(0,Math.ceil(i._mu*((+i.lead||0)+1)-i._cur))});
  calc={monthCost:monthCost,monthPieces:monthPieces,monthRows:monthRows,cr:cr,topm:topm,daily:daily,now:now};
 }
 function scope(){return S.items.filter(function(i){return room==='ALL'||i.room===room})}
@@ -108,7 +108,7 @@ function dash(){
  $('top').innerHTML=tl.length?tl.map(function(k){var p=k.split('|');return '<div class="b"><span title="'+esc(p[1])+'">'+esc(p[1])+(room==='ALL'?' ('+code(p[0])+')':'')+'</span><span class="t"><i style="width:'+calc.topm[k]/tm*100+'%"></i></span><span class="x">'+fmt(calc.topm[k])+'</span></div>'}).join(''):'<p class="fine">No checkouts this month yet.</p>';
  // reorder
  var R=re.slice().sort(function(a,b){return (a._st==='OUT'?0:1)-(b._st==='OUT'?0:1)||a._cur/(a._rp||1)-b._cur/(b._rp||1)});
- $('reo').innerHTML=R.length?R.map(function(i){return '<tr class="'+(i._st==='OUT'?'out':'low')+'"><td>'+code(i.room)+'</td><td>'+esc(i.name)+'</td><td class="n">'+fmt(i._cur)+'</td><td class="n">'+fmt(i._rp)+'</td><td class="n">'+fmt(i._sug)+'</td></tr>'}).join(''):'<tr><td colspan="5">Nothing needs reordering.</td></tr>';
+ $('reo').innerHTML=R.length?R.map(function(i){return '<tr class="'+(i._st==='OUT'?'out':'low')+'"><td>'+code(i.room)+'</td><td>'+esc(i.name)+'</td><td class="n">'+fmt(i._cur)+'</td><td class="n">'+fmt(i._rp)+'</td><td class="n">'+(isFinite(i._dos)?fmt(i._dos):'—')+'</td><td class="n">'+fmt(i._sug)+'</td></tr>'}).join(''):'<tr><td colspan="6">Nothing needs reordering.</td></tr>';
 }
 
 /* ---------- stations ---------- */
@@ -160,7 +160,7 @@ function inv(){
  var cls={OK:'ok',REORDER:'warn',OUT:'bad'};
  $('invTb').innerHTML=L.map(function(i){var k=S.items.indexOf(i);return '<tr class="'+(i._st==='OUT'?'out':i._st==='REORDER'?'low':'')+'"><td>'+code(i.room)+'</td><td>'+esc(i.name)+'</td><td>'+esc(i.barcode)+'</td><td class="n">'+money(i.price)+'</td>'
   +'<td class="n"><input type="number" min="0" data-k="'+k+'" data-f="phys" value="'+i.phys+'"></td><td class="n">'+fmt(i._in)+'</td><td class="n">'+fmt(i._out)+'</td><td class="n"><b>'+fmt(i._cur)+'</b></td><td class="n">'+money(i._val)+'</td>'
-  +'<td class="n"><input type="number" min="0" step="0.5" data-k="'+k+'" data-f="lead" value="'+i.lead+'"></td><td class="n"><input type="number" min="0" data-k="'+k+'" data-f="usage" value="'+(i.usage===null||i.usage===''?'':i.usage)+'" placeholder="'+fmt(i._mu)+'"></td><td class="n">'+fmt(i._rp)+'</td><td><span class="pill '+cls[i._st]+'">'+i._st+'</span></td></tr>'}).join('');
+  +'<td class="n"><input type="number" min="0" step="0.5" data-k="'+k+'" data-f="lead" value="'+i.lead+'"></td><td class="n"><input type="number" min="0" data-k="'+k+'" data-f="usage" value="'+(i.usage===null||i.usage===''?'':i.usage)+'" placeholder="'+fmt(i._mu)+'"></td><td class="n">'+fmt(i._rp)+'</td><td class="n">'+(isFinite(i._dos)?fmt(i._dos):'—')+'</td><td><span class="pill '+cls[i._st]+'">'+i._st+'</span></td></tr>'}).join('');
  $('invCnt').textContent=L.length+' of '+scope().length+' items';
  $('invTb').querySelectorAll('input').forEach(function(inp){inp.onchange=function(){var it=S.items[+inp.dataset.k],f=inp.dataset.f,v=inp.value.trim();
   if(f==='usage')it.usage=v===''?null:Math.max(0,+v);else it[f]=Math.max(0,+v||0);save();compute();inv()}});
@@ -210,7 +210,7 @@ function init(){
  $('q').oninput=inv;$('flt').onchange=inv;$('lq').oninput=logv;$('ldir').onchange=logv;
  $('resetDemo').onclick=function(){if(confirm('Replace everything in this browser with fresh demo data?')){S=demo();save();pending={IN:[],OUT:[]};render()}};
  $('expLog').onclick=expLog;
- $('expReo').onclick=function(){var L=scope().filter(function(i){return i._st!=='OK'});dl('reorder_list.csv',['Supply Room,Barcode,Item,Status,On Hand,Reorder Point,Suggested Order'].concat(L.map(function(i){return [i.room,i.barcode,i.name,i._st,i._cur,i._rp,i._sug].map(csvq).join(',')})).join('\n'))};
+ $('expReo').onclick=function(){var L=scope().filter(function(i){return i._st!=='OK'});dl('reorder_list.csv',['Supply Room,Barcode,Item,Status,On Hand,Reorder Point,Days of Supply,Suggested Order'].concat(L.map(function(i){return [i.room,i.barcode,i.name,i._st,i._cur,i._rp,isFinite(i._dos)?Math.round(i._dos):'',i._sug].map(csvq).join(',')})).join('\n'))};
  $('impBtn').onclick=function(){$('impFile').click()};
  $('impFile').onchange=function(e){var fs=Array.prototype.slice.call(e.target.files),tot={added:0,dup:0,bad:0,unk:{}},m=$('impMsg');m.className='msg';
   Promise.all(fs.map(function(f){return f.text().then(function(t){return importText(t,f.name)})})).then(function(rs){

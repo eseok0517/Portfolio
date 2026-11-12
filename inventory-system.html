@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Supply Room Inventory System | Ehahn Seok</title>
-<meta name="description" content="A working supply-room inventory system: scan items in and out, keep running counts, get reorder alerts, and track KPIs. A web version of the Excel/VBA system I built at LG.">
+<meta name="description" content="A working supply-room inventory system: scan items in and out, keep running counts, get reorder alerts, and track KPIs. An improved web version of an Excel/VBA tool I built during an internship.">
 <link rel="stylesheet" href="style.css?v=pf3">
 <link rel="icon" href="favicon.ico?v=g9c7u4w3" type="image/x-icon">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png?v=g9c7u4w3">
@@ -74,10 +74,10 @@ table.data{border-collapse:collapse;width:100%;font-size:13px}
 <header class="site-header"><a class="brand" href="index.html">Ehahn Seok<span>Data & business analytics</span></a><nav aria-label="Main navigation"><a href="index.html#projects">Selected work</a><a href="index.html#experience">Experience</a><a href="index.html#contact">Contact</a></nav></header>
 <main id="main">
 <section class="intro">
-<p class="eyebrow">Inventory systems · Web version of my LG work</p>
+<p class="eyebrow">Inventory systems · Built on my internship tool</p>
 <h1>Supply Room Inventory System</h1>
-<p class="lead">At LG, I built an Excel/VBA system where operators scanned items in and out of three supply rooms, and a master workbook consolidated the logs into counts, reorder flags and a dashboard. This is the same workflow as a web app: scan, update counts, flag reorders, and read the KPIs. Everything runs in your browser.</p>
-<p class="fine">The demo uses synthetic items, prices and names that I created. It is not LG data. Changes you make are stored only in this browser.</p>
+<p class="lead">A supply-room inventory system that runs in the browser. Operators scan items in and out, counts and reorder points update from the log, and a dashboard reports value, usage and low-stock items across rooms. It started as an Excel/VBA tool I built during an internship; this version removes that tool’s main limits and adds usage-based reordering.</p>
+<p class="fine">All items, prices and names are synthetic and created for this demo. Changes you make are stored only in this browser.</p>
 </section>
 
 <section>
@@ -88,7 +88,7 @@ table.data{border-collapse:collapse;width:100%;font-size:13px}
 <button role="tab" data-t="in" aria-selected="false">Scan in</button>
 <button role="tab" data-t="inv" aria-selected="false">Inventory</button>
 <button role="tab" data-t="log" aria-selected="false">Data log</button>
-<button role="tab" data-t="how" aria-selected="false">How it works</button>
+<button role="tab" data-t="how" aria-selected="false">What improved</button>
 </div>
 <div class="ctl"><label>Supply room <select id="room"></select></label><button class="b" id="resetDemo">Reset demo data</button></div>
 </div>
@@ -102,7 +102,7 @@ table.data{border-collapse:collapse;width:100%;font-size:13px}
 </div>
 <div class="grid2">
 <div class="panel"><h3>Most-used items this month (pieces out)</h3><div id="top" class="bars"></div></div>
-<div class="panel"><h3>Reorder list</h3><div class="tw" style="max-height:330px;overflow:auto"><table class="data"><thead><tr><th>Room</th><th>Item</th><th class="n">On hand</th><th class="n">Reorder point</th><th class="n">Suggested order</th></tr></thead><tbody id="reo"></tbody></table></div><div class="tools" style="margin-top:12px"><button class="b" id="expReo">Export reorder list (CSV)</button></div></div>
+<div class="panel"><h3>Reorder list</h3><div class="tw" style="max-height:330px;overflow:auto"><table class="data"><thead><tr><th>Room</th><th>Item</th><th class="n">On hand</th><th class="n">Reorder point</th><th class="n">Days of supply</th><th class="n">Suggested order</th></tr></thead><tbody id="reo"></tbody></table></div><div class="tools" style="margin-top:12px"><button class="b" id="expReo">Export reorder list (CSV)</button></div></div>
 </div>
 </section>
 
@@ -111,7 +111,7 @@ table.data{border-collapse:collapse;width:100%;font-size:13px}
 
 <section id="p-inv" class="hidden">
 <div class="tools"><input type="search" id="q" placeholder="Search item, barcode or code" aria-label="Search items"><select id="flt" aria-label="Filter status"><option value="">All statuses</option><option>REORDER</option><option>OUT</option><option>OK</option></select><span class="fine" id="invCnt"></span></div>
-<div class="tw" style="max-height:640px;overflow:auto"><table class="data"><thead><tr><th>Room</th><th>Item</th><th>Barcode</th><th class="n">Price</th><th class="n">Physical count</th><th class="n">Scanned in</th><th class="n">Checked out</th><th class="n">Current</th><th class="n">Value</th><th class="n">Lead time (mo)</th><th class="n">Monthly usage</th><th class="n">Reorder point</th><th>Status</th></tr></thead><tbody id="invTb"></tbody></table></div>
+<div class="tw" style="max-height:640px;overflow:auto"><table class="data"><thead><tr><th>Room</th><th>Item</th><th>Barcode</th><th class="n">Price</th><th class="n">Physical count</th><th class="n">Scanned in</th><th class="n">Checked out</th><th class="n">Current</th><th class="n">Value</th><th class="n">Lead time (mo)</th><th class="n">Monthly usage</th><th class="n">Reorder point</th><th class="n">Days of supply</th><th>Status</th></tr></thead><tbody id="invTb"></tbody></table></div>
 <p class="fine" style="margin-top:10px">Edit physical count, lead time and monthly usage directly. Leave monthly usage blank to use the average of the last 90 days of checkouts.</p>
 <details class="panel" style="margin-top:14px"><summary style="cursor:pointer;font-weight:700">Add an item</summary>
 <div class="form" style="margin-top:14px" id="addForm">
@@ -129,26 +129,27 @@ table.data{border-collapse:collapse;width:100%;font-size:13px}
 <p class="fine" style="margin-top:10px">Export gives the same columns the workbook logs used. Importing merges files from any room into the master counts and skips rows already imported.</p>
 </section>
 
-<section id="p-how" class="hidden"><div class="panel guide">
-<h2>How this maps to the Excel system</h2>
-<div class="map">
-<div><b>Scanning In / Checking Out sheets</b>Scan in and Check out tabs: name, barcode, unit type, quantity, running order table, Complete order.</div>
-<div><b>Inventory sheet</b>Inventory tab: physical count + scanned in − checked out, value, lead time × monthly usage as the reorder point.</div>
-<div><b>Scan in / Check out data log</b>Data log tab: one row per line with log ID, checkout ID, timestamp, supply room and who scanned.</div>
-<div><b>CSV export per room</b>Export log (CSV), same column layout.</div>
-<div><b>Master inventory workbook</b>Import CSV logs merges rooms, removes duplicates, rebuilds counts and statuses.</div>
-<div><b>Dashboard sheet</b>Dashboard tab: inventory lines, units on hand, value, reorder items, this month’s checkout cost, items and rows, low-stock rate.</div>
-</div>
+<section id="p-how"><div class="panel guide">
+<h2>What improved over the Excel version</h2>
+<div class="tw"><table class="data"><thead><tr><th>Area</th><th>Excel/VBA version</th><th>This version</th></tr></thead><tbody>
+<tr><td><b>Reorder point</b></td><td>Lead time and monthly usage typed in by hand for each item</td><td>Usage is calculated from the last 90 days of checkouts. A manual value is still allowed as an override.</td></tr>
+<tr><td><b>What to order</b></td><td>Status flag only</td><td>Suggested order quantity and days of supply for every flagged item, with a CSV export</td></tr>
+<tr><td><b>Setup</b></td><td>Separate workbook per room, macros enabled, counts pulled through links to other files</td><td>One app, all rooms in one place, filter by room. No macros, install or file links to break.</td></tr>
+<tr><td><b>Consolidation</b></td><td>Run a refresh macro against a shared folder of CSV logs</td><td>Counts update the moment an order is completed. CSV import is still there for outside logs and skips duplicates.</td></tr>
+<tr><td><b>Visibility</b></td><td>Counts and KPI tiles</td><td>Daily checkout cost trend, most-used items, stock status mix and cost by room, all live</td></tr>
+<tr><td><b>Demonstration</b></td><td>Needs Excel and the real data</td><td>Opens in any browser, with a simulate-a-scan button for demos without a scanner</td></tr>
+</tbody></table></div>
 <h2 style="margin-top:22px">Rules the system applies</h2>
 <ul>
 <li>A line needs a name, a known barcode, a unit type that item supports, and a whole-number quantity above zero. Blank quantity counts as 1.</li>
 <li>Pieces = quantity × the item’s pieces per unit (box, pack, roll or individual). Prices are per piece, so line total = pieces × price.</li>
 <li><b>Current inventory</b> = physical count + pieces scanned in − pieces checked out.</li>
 <li><b>Reorder point</b> = lead time (months) × monthly usage. Status is <code>REORDER</code> at or below it and <code>OUT</code> at zero or less. The suggested order restores lead time plus one month of usage.</li>
+<li><b>Days of supply</b> = current pieces ÷ (monthly usage ÷ 30).</li>
 <li>Check out is blocked when it would take more pieces than are on hand, so counts never go negative from scanning.</li>
 <li>Importing identifies a log row by room and checkout ID, or by room, order, barcode and direction, so the same file can be imported twice safely.</li>
 </ul>
-<p class="fine">Not included: the Net Monitor setup, shared-drive folder import and the Excel buttons. The browser version stores data locally in place of a shared drive.</p>
+<p class="fine">Not included: user logins and a shared database. Data is stored in the browser, so a real deployment would need a backend.</p>
 </div></section>
 </main>
 <footer><span>Ehahn Seok · Michigan State University</span><span><a href="inventory-kpi.html">Analyze any movement CSV</a> · <a href="index.html">Back to portfolio</a></span></footer>
