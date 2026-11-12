@@ -22,10 +22,12 @@ jobs:
         run: python scripts/fetch_macro.py --out data
 
       - name: Fetch stock and ETF prices
+        continue-on-error: true
         run: python scripts/fetch_equities.py --out data
 
-      - name: Fetch Arizona federal contract awards
-        run: python scripts/fetch_az_spending.py --out data
+      - name: Fetch FDIC bank call-report data
+        continue-on-error: true
+        run: python scripts/fetch_banks.py --out data
 
       - name: Commit changes
         run: |
