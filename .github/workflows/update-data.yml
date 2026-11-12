@@ -24,6 +24,9 @@ jobs:
       - name: Fetch stock and ETF prices
         run: python scripts/fetch_equities.py --out data
 
+      - name: Fetch Arizona federal contract awards
+        run: python scripts/fetch_az_spending.py --out data
+
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
