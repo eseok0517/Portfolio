@@ -36,14 +36,17 @@ table.data{border-collapse:collapse;width:100%;font-size:13px}.data th,.data td{
 .wrap{position:relative}
 .method li{font-size:14px;color:var(--muted);margin:0 0 7px}.hidden{display:none!important}
 @media(max-width:900px){.kpis{grid-template-columns:1fr 1fr}.two{grid-template-columns:minmax(0,1fr)}}
-.fcards{display:grid;gap:14px;margin-top:14px}
-.fcard{display:grid;grid-template-columns:230px 1fr;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
-.fstat{background:#f1f6f3;border-right:1px solid var(--border);padding:20px 22px;display:flex;flex-direction:column;justify-content:center}
-.fstat b{font:400 30px/1.1 Georgia,'Times New Roman',serif;color:var(--accent);letter-spacing:-.02em}
-.fstat small{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}
-.fbody{padding:18px 24px}.ftag{font-size:10.5px;font-weight:750;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
-.fbody h3{font:700 17px/1.3 inherit;margin:4px 0 6px}.fbody p{margin:0;font-size:14.5px;line-height:1.6;color:var(--muted)}
-@media(max-width:700px){.fcard{grid-template-columns:1fr}.fstat{border-right:0;border-bottom:1px solid var(--border)}}
+.fcards{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:14px}
+.fcard{grid-column:span 2;background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:10px;padding:18px 20px 20px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.fcard:nth-child(n+4){grid-column:span 3}
+.ftag{font-size:10.5px;font-weight:750;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.fstat{margin:10px 0 12px}.fstat b{display:block;font:400 38px/1.05 Georgia,'Times New Roman',serif;color:var(--accent);letter-spacing:-.02em}
+.fstat small{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+.fbars{display:grid;gap:7px;margin:0 0 14px}.fb{display:grid;grid-template-columns:128px 1fr 44px;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+.fb i{height:10px;background:#eef2f0;border-radius:5px;overflow:hidden;display:block}.fb u{display:block;height:100%;border-radius:5px;background:#b9c4bf}.fb u.c0{background:var(--accent)}
+.fb em{font-style:normal;font-weight:700;color:var(--text);text-align:right}
+.fcard h3{font:700 16px/1.3 inherit;margin:0 0 6px}.fcard p{margin:0;font-size:13.5px;line-height:1.55;color:var(--muted)}
+@media(max-width:900px){.fcards{grid-template-columns:1fr}.fcard,.fcard:nth-child(n+4){grid-column:auto}}
 </style>
 </head>
 <body class="er">
@@ -95,6 +98,6 @@ table.data{border-collapse:collapse;width:100%;font-size:13px}.data th,.data td{
 </ul></section>
 </main>
 <footer><span>Ehahn Seok · Michigan State University</span><span><a href="projects/macro-regimes/">Index-level regime study</a> · <a href="index.html">Back to portfolio</a></span></footer>
-<script src="findings.js?v=14"></script>
+<script src="findings.js?v=16"></script>
 <script src="equity-risk.js?v=4"></script>
 </body></html>
