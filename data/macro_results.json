@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-11-12 20:40",
+ "generated_utc": "2026-11-13 01:18",
  "synthetic": false,
  "refresh_mode": "fresh FRED download",
  "sample": {
@@ -24,8 +24,8 @@
   "T10Y2Y": {
    "description": "10Y minus 2Y Treasury spread (pct. points)",
    "first": "2000-01-03",
-   "last": "2026-11-10",
-   "observations": 6718
+   "last": "2026-11-12",
+   "observations": 6719
   },
   "CPIAUCSL": {
    "description": "Consumer Price Index (all urban consumers)",
