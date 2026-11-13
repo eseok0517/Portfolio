@@ -42,20 +42,16 @@ async function macroMonths(){
 macroMonths().catch(()=>{});
 
 async function bankCard(){
+ const BT=await Findings.load('data/backtest.json');if(BT&&BT.tuned)Findings.setCutoffs(BT.tuned.cutoffs);
  const r=await fetch('data/banks.json',{cache:'no-store'});if(!r.ok)return;const D=await r.json();
  const last=b=>b.quarters.at(-1),yoy=b=>{const q=b.quarters;return q.length>=5&&q.at(-5).deposits?(q.at(-1).deposits/q.at(-5).deposits-1)*100:null};
- const flags=b=>{const q=last(b),qs=b.quarters,n=qs.length,y=yoy(b),f=[];
-  if(q.roa!=null&&q.roa<.5)f.push('Low ROA');
-  if(n>=5&&q.nim!=null&&qs[n-5].nim!=null&&q.nim-qs[n-5].nim<=-.25)f.push('Margin squeeze');
-  if(q.eq_assets!=null&&q.eq_assets<8)f.push('Thin equity');
-  if(q.loans_dep!=null&&q.loans_dep>90)f.push('High loans/deposits');
-  if(y!=null&&y<=-5)f.push('Deposit outflow');return f};
+ const flags=b=>Findings.flags(b);
  const med=a=>{a=a.filter(x=>x!=null&&isFinite(x)).sort((x,y)=>x-y);const m=a.length>>1;return a.length%2?a[m]:(a[m-1]+a[m])/2};
  const az=D.banks.filter(b=>b.group==='az').sort((a,b)=>last(b).assets-last(a).assets),big=D.banks.filter(b=>b.group==='big');
  if(az.length<3||big.length<3)return;
  const rows=[...az].sort((a,b)=>flags(b).length-flags(a).length||last(b).assets-last(a).assets).slice(0,4);
  document.getElementById('bank-viz').outerHTML='<div class="bk-rows" id="bank-viz"><div style="background:#f3f7f5;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)"><span>Most flagged banks</span><em>ROA</em></div>'+rows.map(b=>{const f=flags(b);return `<div><span><b>${b.name.replace(/, N\.A\.| National Association/,'')}</b><span class="bk-chips">${f.length?f.map(x=>'<i>'+x+'</i>').join(''):'<i class="ok">No flags</i>'}</span></span><em>${last(b).roa==null?'—':last(b).roa.toFixed(2)+'%'}</em></div>`}).join('')+'</div>';
- const BT=await Findings.load('data/backtest.json'),F=Findings.bank(D,BT);
+ const F=Findings.bank(D,BT);
  if(F){document.getElementById('bank-finding').textContent=F.card;const c=document.getElementById('bank-result');if(c)c.textContent=F.headline}
 }
 async function equityFinding(){

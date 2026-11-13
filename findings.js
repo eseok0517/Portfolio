@@ -4,13 +4,16 @@ var COMM_MAX=1e7; /* $10 billion, in thousands */
 function last(b){return b.quarters[b.quarters.length-1]}
 function yoy(b){var q=b.quarters,n=q.length;return n>=5&&q[n-5].deposits?(q[n-1].deposits/q[n-5].deposits-1)*100:null}
 function med(a){a=a.filter(function(x){return x!=null&&isFinite(x)}).sort(function(x,y){return x-y});if(!a.length)return null;var m=a.length>>1;return a.length%2?a[m]:(a[m-1]+a[m])/2}
+var CUT={roa:0.5,dnim:0.25,eq:8,ld:90,ddep:5,nc:3};
+function setCutoffs(c){if(!c)return;['roa','dnim','eq','ld','ddep','nc'].forEach(function(k){if(typeof c[k]==='number')CUT[k]=c[k]})}
 function flags(b){var qs=b.quarters,n=qs.length,q=qs[n-1],y=yoy(b),f=[];
- if(q.roa!=null&&q.roa<.5)f.push('Low ROA');
- if(n>=5&&q.nim!=null&&qs[n-5].nim!=null&&q.nim-qs[n-5].nim<=-.25)f.push('Margin squeeze');
- if(q.eq_assets!=null&&q.eq_assets<8)f.push('Thin equity');
- if(q.loans_dep!=null&&q.loans_dep>90)f.push('High loans/deposits');
- if(y!=null&&y<=-5)f.push('Deposit outflow');
- if(q.noncurrent!=null&&q.noncurrent>3)f.push('Asset quality');return f}
+ if(q.roa!=null&&q.roa<CUT.roa)f.push('Low ROA');
+ if(n>=5&&q.nim!=null&&qs[n-5].nim!=null&&qs[n-5].nim-q.nim>=CUT.dnim)f.push('Margin squeeze');
+ if(q.eq_assets!=null&&q.eq_assets<CUT.eq)f.push('Thin equity');
+ if(q.loans_dep!=null&&q.loans_dep>CUT.ld)f.push('High loans/deposits');
+ if(y!=null&&-y>=CUT.ddep)f.push('Deposit outflow');
+ if(q.noncurrent!=null&&q.noncurrent>CUT.nc)f.push('Asset quality');return f}
+function tip(){return {'Low ROA':'Return on assets under '+CUT.roa+'%','Margin squeeze':'Net interest margin down '+CUT.dnim+' points or more from a year earlier','Thin equity':'Equity under '+CUT.eq+'% of assets','High loans/deposits':'Loans above '+CUT.ld+'% of deposits','Deposit outflow':'Deposits down '+CUT.ddep+'% or more year over year','Asset quality':'Noncurrent loans above '+CUT.nc+'% of loans'}}
 var W=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
 function w(n){return W[n]!=null?W[n]:String(n)}
 function lc(t){return t.charAt(0).toLowerCase()+t.slice(1)}
@@ -47,10 +50,10 @@ function bank(D,BT){
  var primary=hasPeer?comm:az,cmpG=hasPeer?peer:big,pl=hasPeer?'similar-sized peers':'the ten largest banks';
  tiles.push(['Median ROA, Arizona '+(hasPeer?'community banks':'banks'),pc(L(primary,'roa')),(hasPeer?'Peers '+pc(L(peer,'roa'))+' · ':'')+'Ten largest '+pc(L(big,'roa'))]);
  tiles.push(['Banks tripping a screen',nfA+' of '+az.length,hasPeer?'Community '+share(comm)+'% · peers '+share(peer)+'%':'Ten largest: '+big.filter(function(b){return flags(b).length}).length+' of '+big.length]);
- if(bt)tiles.push(['Failures flagged a year early',Math.round(bt.window.failed_any)+'%','Survivors flagged '+Math.round(bt.window.survivors_any)+'%']);
+ if(bt)tiles.push(['Failures on alert a year early',Math.round(bt.window.failed_2plus)+'%','Survivors on alert '+Math.round(bt.window.survivors_2plus)+'%']);
  if(giants.length){var tt=az.reduce(function(s,b){return s+last(b).assets},0),gg=giants.reduce(function(s,b){return s+last(b).assets},0);tiles.push(['Assets held by '+w(giants.length)+' banks',Math.round(100*gg/tt)+'%','of '+money(tt)+' in Arizona-headquartered bank assets'])}
  var rl=L(primary,'roa')<L(cmpG,'roa')?'less':'more';
- out.lead='Arizona’s '+(hasPeer?w(comm.length)+' community banks':w(az.length)+' banks')+' earned '+rl+' than '+pl+' ('+pc(L(primary,'roa'))+' against '+pc(L(cmpG,'roa'))+' median return on assets)'+(hasPeer?' and were flagged '+(share(comm)>share(peer)+5?'more':share(comm)<share(peer)-5?'less':'about as')+(Math.abs(share(comm)-share(peer))<=5?' often as them':' often than them')+' ('+share(comm)+'% against '+share(peer)+'%)':'')+'.'+(bt?' In a back-test, the screens flagged '+Math.round(bt.window.failed_any)+'% of banks a year before they failed but also '+Math.round(bt.window.survivors_any)+'% of survivors, so they are a tool for choosing which banks to review, not a forecast of failure.':'');
+ out.lead='Arizona’s '+(hasPeer?w(comm.length)+' community banks':w(az.length)+' banks')+' earned '+rl+' than '+pl+' ('+pc(L(primary,'roa'))+' against '+pc(L(cmpG,'roa'))+' median return on assets)'+(hasPeer?' and were flagged '+(share(comm)>share(peer)+5?'more':share(comm)<share(peer)-5?'less':'about as')+(Math.abs(share(comm)-share(peer))<=5?' often as them':' often than them')+' ('+share(comm)+'% against '+share(peer)+'%)':'')+'.'+(bt?' In a back-test, '+Math.round(bt.window.failed_2plus)+'% of banks that later failed had two or more screens tripped a year earlier, against '+Math.round(bt.window.survivors_2plus)+'% of survivors, so the screens help choose which banks to review but do not forecast failure.':'');
  if(hasPeer){
   var rowsT=[['Median ROA',function(g){return pc(L(g,'roa'))}],['Net interest margin',function(g){return pc(L(g,'nim'))}],['Equity / assets',function(g){return pc(L(g,'eq_assets'),1)}],['Loans / deposits',function(g){return pc(L(g,'loans_dep'),0)}],['Efficiency ratio',function(g){return pc(L(g,'eff'),0)}],['Banks tripping a screen',function(g){return share(g)+'%'}]];
   out.table={cols:['Arizona community banks ('+comm.length+')','Similar-sized peers ('+peer.length+')','Ten largest U.S. banks'],rows:rowsT.map(function(r){return [r[0],r[1](comm),r[1](peer),r[1](big)]})};
@@ -65,10 +68,23 @@ function bank(D,BT){
  var top=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]}).slice(0,2);
  g2.push([cap(w(nfA))+' of '+w(az.length)+' Arizona banks tripped at least one screen.',top.length?'The most common were '+lc(top[0])+' ('+w(cnt[top[0]])+' banks)'+(top[1]?' and '+lc(top[1])+' ('+w(cnt[top[1]])+').':'.')+(hasPeer?(Math.abs(share(comm)-share(peer))<=5?' Peers tripped screens at a similar rate, so a flag by itself does not make a bank unusual.':share(comm)>share(peer)?' Arizona community banks tripped screens more often than peers.':' Arizona community banks tripped screens less often than peers.'):''):'']);
  if(giants.length)g2.push([cap(w(giants.length))+' bank'+(giants.length>1?'s':'')+' hold'+(giants.length>1?'':'s')+' '+Math.round(100*gg/tt)+'% of the assets.','That concentration is why the giants are compared with the ten largest banks and the rest with similar-sized peers.']);
- if(bt){g3.push([bt.head.replace('Back-test: ',''),'Test of '+bt.window.failed_n+' failures in the '+bt.window.name+' against '+bt.window.survivor_obs+' survivor observations. Two or more screens fired for '+Math.round(bt.window.failed_2plus)+'% of failures and '+Math.round(bt.window.survivors_2plus)+'% of survivors.']);
+ if(bt){g3.push([bt.head.replace('Back-test: ',''),bt.text]);if(bt.tuning)g3.push(bt.tuning);
   var sg2=signal(BT);if(sg2)g3.push(sg2);
-  var rr=BT.windows.filter(function(x){return x.id==='recent'})[0];if(rr&&rr.failed_any!=null)g3.push([rr.failed_any-rr.survivors_any>=10?'The pattern holds in the recent rate shock, with fewer cases.':'The screens were less informative in the recent rate shock.',Math.round(rr.failed_any)+'% of '+rr.failed_n+' failures from '+rr.name+' tripped a screen, against '+Math.round(rr.survivors_any)+'% of survivors.'])}
- groups.push({title:'Peer comparison',items:g1,table:true});groups.push({title:'What the screens flag',items:g2});if(g3.length)groups.push({title:'Do the screens work?',items:g3});
+  var rr=BT.windows.filter(function(x){return x.id==='recent'})[0];if(rr&&rr.failed_2plus!=null)g3.push([rr.failed_2plus-rr.survivors_2plus>=20?'The alert level separates failures in the recent rate shock too, with fewer cases.':'The alert level was less informative in the recent rate shock.',Math.round(rr.failed_2plus)+'% of '+rr.failed_n+' failures from '+rr.name+' had two or more screens tripped, against '+Math.round(rr.survivors_2plus)+'% of survivors.'])}
+ groups.push({title:'Peer comparison',items:g1,table:true});if(out.explain)groups.push({title:'What explains the profitability gap?',items:[['Median ROA by subgroup, Arizona community banks against peers.',out.explain.text]],explain:out.explain});groups.push({title:'What the screens flag',items:g2});if(g3.length)groups.push({title:'Do the screens work?',items:g3});
+ if(hasPeer){
+  var trim=function(g){var s=g.slice().sort(function(a,b){return last(b).roa-last(a).roa});return s.slice(0,Math.max(s.length-2,1))};
+  var small=function(g,hi){return g.filter(function(b){return last(b).assets<hi})};
+  var neg=function(g){return Math.round(100*g.filter(function(b){return last(b).roa!=null&&last(b).roa<0}).length/g.length)};
+  var yr=new Date().getFullYear(),old=function(g){return g.filter(function(b){return b.est&&yr-b.est>=10})},young=function(g){return g.filter(function(b){return b.est&&yr-b.est<10})};
+  var rows=[['All banks',L(comm,'roa'),L(peer,'roa'),comm.length,peer.length],['Excluding the two weakest',L(trim(comm),'roa'),L(trim(peer),'roa'),Math.max(comm.length-2,1),Math.max(peer.length-2,1)]];
+  var sc=small(comm,3e5),sp=small(peer,3e5);if(sc.length>=3&&sp.length>=5)rows.push(['Banks under $300 million',L(sc,'roa'),L(sp,'roa'),sc.length,sp.length]);
+  var oc=old(comm),op=old(peer);if(oc.length>=3&&op.length>=5)rows.push(['Banks 10 or more years old',L(oc,'roa'),L(op,'roa'),oc.length,op.length]);
+  var yc=young(comm),yp=young(peer);var hasAge=comm.some(function(b){return b.est});
+  var tr=rows[1],gAll=rows[0][2]-rows[0][1],gTr=tr[2]-tr[1],t='';
+  t=(gAll>0?(gTr>=.6*gAll?'The profitability gap persists after removing the weakest banks, so a few outliers do not explain it. ':'The gap narrows when the weakest banks are removed, so a few outliers account for much of it. '):'Arizona community banks are not behind peers on profitability. ')+'Dropping the two weakest banks from each group moves the Arizona median from '+pc(rows[0][1])+' to '+pc(tr[1])+' and the peer median from '+pc(rows[0][2])+' to '+pc(tr[2])+'. '+neg(comm)+'% of Arizona community banks had negative ROA, against '+neg(peer)+'% of peers.';
+  if(hasAge&&yc.length>=1)t+=' '+yc.length+' of the '+comm.length+' Arizona community banks are under ten years old, against '+young(peer).length+' of '+peer.length+' peers; young banks typically earn less while they build loans.';
+  out.explain={rows:rows,text:t,hasAge:hasAge}}
  out.tiles=tiles;out.groups=groups;
  out.items=items;
  out.headline=cap(w(nfA))+' of '+w(az.length)+' Arizona banks tripped a screen in '+ql+'; '+(hasPeer?'community-bank ROA '+pc(L(comm,'roa'))+' vs '+pc(L(peer,'roa'))+' at similar-sized peers.':'median ROA '+pc(L(az,'roa'))+' vs '+pc(L(big,'roa'))+' at the largest banks.');
@@ -78,20 +94,19 @@ function bank(D,BT){
 function backtest(BT){
  if(!BT||!BT.windows||!BT.windows.length)return null;
  var c=BT.windows.filter(function(x){return x.id==='crisis'})[0]||BT.windows[0];
- if(c.failed_any==null||c.survivors_any==null)return null;
- var lift=c.survivors_any>0?c.failed_any/c.survivors_any:null;
- var head='Back-test: '+Math.round(c.failed_any)+'% of banks that later failed tripped a screen a year before, against '+Math.round(c.survivors_any)+'% of survivors.';
- var text='In the '+c.name+', '+c.failed_n+' failed banks were screened using their call reports from about one year before failure, alongside '+c.survivor_obs+' bank-date observations from banks that survived. Two or more screens fired for '+Math.round(c.failed_2plus)+'% of failures and '+Math.round(c.survivors_2plus)+'% of survivors. '
-  +(lift?'Failed banks were '+lift.toFixed(1)+' times as likely as survivors to have tripped a screen, but ':'')+'many surviving banks tripped one too, so the screens work as a place to start a review, not as a prediction.';
- var r=BT.windows.filter(function(x){return x.id==='recent'})[0];
- if(r&&r.failed_any!=null)text+=' In the '+r.name+', '+Math.round(r.failed_any)+'% of '+r.failed_n+' failures tripped a screen against '+Math.round(r.survivors_any)+'% of survivors.';
- return {head:head,text:text,short:'In a back-test on '+c.failed_n+' bank failures, '+Math.round(c.failed_any)+'% had tripped a screen a year earlier, against '+Math.round(c.survivors_any)+'% of survivors.',window:c}}
+ if(c.failed_2plus==null||c.survivors_2plus==null)return null;
+ var r=BT.windows.filter(function(x){return x.id==='recent'})[0],R=Math.round;
+ var head='Back-test: '+R(c.failed_2plus)+'% of banks that later failed had two or more screens tripped a year before, against '+R(c.survivors_2plus)+'% of survivors.';
+ var text='In the '+c.name+', '+c.failed_n+' failed banks were screened using their call reports from about one year before failure, alongside '+c.survivor_obs+' bank-date observations from banks that survived. A single screen is a watch signal: it flagged '+R(c.failed_any)+'% of failures and '+R(c.survivors_any)+'% of survivors. Two or more is the alert level.';
+ var tuning=null;
+ if(c.before&&BT.tuned){var imp=c.survivors_2plus<c.before.survivors_2plus-3,tg=r&&r.failed_2plus!=null?r.failed_2plus-r.survivors_2plus:null,bg=r&&r.before?r.before.failed_2plus-r.before.survivors_2plus:null;
+  tuning=[imp?(tg!=null&&bg!=null&&tg>=bg?'Retuning the cutoffs cut false alarms and the gain held on a second period.':'Retuning cut false alarms on the crisis data, but the gain was smaller on the second period.'):'Retuning the cutoffs did not reduce false alarms much.','The initial cutoffs put two or more screens on '+R(c.before.failed_2plus)+'% of failures but also '+R(c.before.survivors_2plus)+'% of survivors. Cutoffs searched on the 2009-2012 failures alone give '+R(c.failed_2plus)+'% against '+R(c.survivors_2plus)+'%.'+(r&&r.failed_2plus!=null?' Applied unchanged to the '+r.name+', which was not used for tuning, the alert level flagged '+R(r.failed_2plus)+'% of '+r.failed_n+' failures and '+R(r.survivors_2plus)+'% of survivors'+(r.before?' (the initial cutoffs gave '+R(r.before.failed_2plus)+'% and '+R(r.before.survivors_2plus)+'%).':'.'):'')]}
+ return {head:head,text:text,tuning:tuning,short:'In a back-test on '+c.failed_n+' bank failures, '+R(c.failed_2plus)+'% had two or more screens tripped a year earlier, against '+R(c.survivors_2plus)+'% of survivors.',window:c,recent:r}}
 
-var CUR={'Low ROA':0.5,'Margin squeeze':0.25,'Thin equity':8,'High loans/deposits':90,'Deposit outflow':5,'Asset quality':3};
 function signal(BT){var c=BT.windows.filter(function(x){return x.id==='crisis'})[0];if(!c||!c.sweep)return null;
- var rows=[];Object.keys(CUR).forEach(function(k){var s=(c.sweep[k]||[]).filter(function(r){return r.cutoff===CUR[k]})[0];if(s&&s.failed!=null&&s.survivors!=null)rows.push({k:k,gap:s.failed-s.survivors,f:s.failed,s:s.survivors})});
+ var rows=[];var CK={'Low ROA':'roa','Margin squeeze':'dnim','Thin equity':'eq','High loans/deposits':'ld','Deposit outflow':'ddep','Asset quality':'nc'};Object.keys(CK).forEach(function(k){var s=(c.sweep[k]||[]).filter(function(r){return r.cutoff===CUT[CK[k]]})[0];if(s&&s.failed!=null&&s.survivors!=null)rows.push({k:k,gap:s.failed-s.survivors,f:s.failed,s:s.survivors})});
  if(rows.length<3)return null;rows.sort(function(a,b){return b.gap-a.gap});var t=rows[0],u=rows[rows.length-1];
- return ['Some screens carried the signal; others did not.',t.k+' separated failures from survivors best ('+Math.round(t.f)+'% of failures against '+Math.round(t.s)+'% of survivors). '+u.k+' separated them least ('+Math.round(u.f)+'% against '+Math.round(u.s)+'%), which makes it the first cutoff to retune or drop. The cutoff table below tests alternatives.']}
+ return ['Some screens carried the signal; others did not.',t.k+' separated failures from survivors best ('+Math.round(t.f)+'% of failures against '+Math.round(t.s)+'% of survivors). '+u.k+' separated them least ('+Math.round(u.f)+'% against '+Math.round(u.s)+'%), which makes it the weakest screen on its own. The cutoff table below shows how each screen behaves at other cutoffs.']}
 function equity(d){
  var n=d.months.length,P={};d.tickers.forEach(function(t){P[t.symbol]=t.prices});var c=d.macro.curve,cpi=d.macro.cpi_yoy;
  if(!P.NVDA||!P.SPY||!P.JPM||!P.GS||!P.TLT)return null;
@@ -120,5 +135,5 @@ function equity(d){
 
 function list(items){return items.map(function(i){return '<li><b>'+i[0]+'</b> '+i[1]+'</li>'}).join('')}
 function load(u){return fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).catch(function(){return null})}
-window.Findings={bank:bank,equity:equity,list:list,load:load,flags:flags,last:last,med:med,yoy:yoy,COMM_MAX:COMM_MAX};
+window.Findings={cut:CUT,setCutoffs:setCutoffs,tip:tip,bank:bank,equity:equity,list:list,load:load,flags:flags,last:last,med:med,yoy:yoy,COMM_MAX:COMM_MAX};
 })();

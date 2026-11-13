@@ -70,12 +70,43 @@ def hit(m, key, direction, t):
     return v < t if direction == "lt" else v > t if direction == "gt" else v >= t
 
 
+SCREEN_KEYS = [("Low ROA", "roa", "lt"), ("Margin squeeze", "dnim", "ge"), ("Thin equity", "eq", "lt"),
+               ("High loans/deposits", "ld", "gt"), ("Deposit outflow", "ddep", "ge"), ("Asset quality", "nc", "gt")]
+
+
+def flags_with(m, cut):
+    """Screens tripped by a metrics dict under a set of cutoffs (same rules as the dashboard)."""
+    return [name for name, k, d in SCREEN_KEYS if hit(m, k, d, cut[k])]
+
+
 def flags_at(qs, i):
-    """Same rules and cutoffs as the dashboard (bank-monitor.js)."""
     m = metrics_at(qs, i)
-    cur = {"Low ROA": ("roa", "lt", THRESH["roa"]), "Margin squeeze": ("dnim", "ge", THRESH["dnim"]), "Thin equity": ("eq", "lt", THRESH["eq"]),
-           "High loans/deposits": ("ld", "gt", THRESH["ld"]), "Deposit outflow": ("ddep", "ge", THRESH["ddep"]), "Asset quality": ("nc", "gt", THRESH["nc"])}
-    return [name for name, (k, d, t) in cur.items() if hit(m, k, d, t)], m
+    return flags_with(m, THRESH), m
+
+
+def choose_cutoffs(failed, controls):
+    """Coordinate ascent over the tested cutoffs. Objective: share of failures with two or more screens tripped minus the
+    share of survivors with two or more tripped (the 'Alert' level). Ties keep the current cutoff."""
+    def score(cut):
+        fr = sum(1 for r in failed if len(flags_with(r["m"], cut)) >= 2) / max(len(failed), 1)
+        sr = sum(1 for r in controls if len(flags_with(r["m"], cut)) >= 2) / max(len(controls), 1)
+        return fr - sr
+    cut = dict(THRESH)
+    for _ in range(3):
+        changed = False
+        for name, key, d, vals in SWEEP:
+            best_t, best_s = cut[key], score(cut)
+            for t in vals:
+                trial = dict(cut, **{key: t})
+                s = score(trial)
+                if s > best_s + 1e-9:
+                    best_t, best_s = t, s
+            if best_t != cut[key]:
+                cut[key] = best_t
+                changed = True
+        if not changed:
+            break
+    return cut
 
 
 def history(cert):
@@ -95,7 +126,9 @@ def even_sample(items, n):
     return [items[round(i * step)] for i in range(n)]
 
 
-def summarize(failed, controls):
+def summarize(failed, controls, cut):
+    for r in failed + controls:
+        r["flags"] = flags_with(r["m"], cut)
     def rate(rows, pred):
         return round(100 * sum(1 for r in rows if pred(r)) / len(rows), 1) if rows else None
     per = {}
@@ -137,7 +170,7 @@ def main():
             print(f"skip control {c.get('CERT')}: {e}", file=sys.stderr)
         time.sleep(0.2)
 
-    results = []
+    raw = []
     for w in WINDOWS:
         lo, hi = parse_date(w["from"]), parse_date(w["to"])
         pool = [(d, r) for d, r in parsed if lo <= d <= hi]
@@ -162,21 +195,42 @@ def main():
                 if i is not None and qs[i]["date"] == ymd and i >= 1:
                     fl, m = flags_at(qs, i)
                     controls.append({"cert": cert, "asof": ymd, "flags": fl, "m": m})
-        s = summarize(failed, controls)
+        raw.append((w, failed, controls))
+
+    crisis = [x for x in raw if x[0]["id"] == "crisis"]
+    if not crisis or len(crisis[0][1]) < 8 or len(crisis[0][2]) < 60:
+        sys.exit("Crisis window too small to tune cutoffs; refusing to write backtest.json")
+    tuned = choose_cutoffs(crisis[0][1], crisis[0][2])
+    print(f"tuned cutoffs (chosen on {crisis[0][0]['name']}): {tuned}", file=sys.stderr)
+
+    results, obs = [], []
+    for w, failed, controls in raw:
+        before = summarize(failed, controls, THRESH)
+        s = summarize(failed, controls, tuned)
         s.update({"id": w["id"], "name": w["name"], "asof_dates": w["asof"],
+                  "before": {k: before[k] for k in ("failed_any", "survivors_any", "failed_2plus", "survivors_2plus")},
                   "examples": [{"name": f["name"], "failed": f["failed"], "asof": f["asof"], "flags": f["flags"]} for f in sorted(failed, key=lambda x: -(x["assets"] or 0))[:6]]})
         results.append(s)
         print(f"{w['id']}: {s['failed_n']} failed, {s['survivor_obs']} survivor observations", file=sys.stderr)
+        for kind, rows_ in (("failed", failed), ("survivor", controls)):
+            for r in rows_:
+                obs.append([w["id"], kind, r.get("name") or r.get("cert"), r.get("asof")] + [("" if r["m"].get(k) is None else round(r["m"][k], 4)) for k in ("roa", "dnim", "eq", "ld", "ddep", "nc")])
 
     usable = [r for r in results if r["failed_n"] >= 8 and r["survivor_obs"] >= 60]
     if not usable:
         sys.exit("Samples too small to report; refusing to write backtest.json")
     out = {"generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"), "source": "FDIC BankFind API (failures, financials)",
            "rule": "Screens applied to the call report from about one year before failure; survivors are banks still active, measured at the same dates.",
+           "defaults": THRESH, "tuned": {"cutoffs": tuned, "chosen_on": crisis[0][0]["id"], "rule": "Cutoffs were searched on the 2009-2012 window only, to maximize the share of failures with two or more screens tripped minus the share of survivors with two or more tripped. The 2023-2026 window was not used for tuning."},
            "windows": usable}
     os.makedirs(args.out, exist_ok=True)
     with open(os.path.join(args.out, "backtest.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, separators=(",", ":"))
+    import csv
+    with open(os.path.join(args.out, "backtest_obs.csv"), "w", newline="", encoding="utf-8") as f:
+        wr = csv.writer(f)
+        wr.writerow(["window", "outcome", "bank", "asof", "roa", "nim_drop", "equity_assets", "loans_deposits", "deposit_drop_pct", "noncurrent_pct"])
+        wr.writerows(obs)
     print(f"Wrote {len(usable)} back-test windows to {args.out}/backtest.json")
 
 

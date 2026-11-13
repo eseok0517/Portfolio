@@ -24,7 +24,7 @@ BASE = "https://api.fdic.gov/banks"
 UA = {"User-Agent": "portfolio-data-pipeline (github.com/eseok0517)"}
 QUARTERS = 13
 FIN_FIELDS = ["CERT", "REPDTE", "ASSET", "DEP", "LNLSNET", "EQ", "NETINC", "ROA", "ROE", "NIMY", "RBC1AAJ", "EEFFR", "NCLNLSR", "NTLNLSR"]
-INST_FIELDS = ["CERT", "NAME", "CITY", "STALP", "ASSET", "DEP", "ACTIVE"]
+INST_FIELDS = ["CERT", "NAME", "CITY", "STALP", "ASSET", "DEP", "ACTIVE", "ESTYMD"]
 
 
 def get(path, params):
@@ -80,6 +80,13 @@ def financials_live(cert):
     return rows(get("financials", {"filters": f"CERT:{cert}", "fields": ",".join(FIN_FIELDS), "sort_by": "REPDTE", "sort_order": "DESC", "limit": QUARTERS, "format": "json"}))
 
 
+def est_year(v):
+    try:
+        return int(str(v)[:4]) if v else None
+    except ValueError:
+        return None
+
+
 def build_bank(inst, group, fin):
     q = []
     for r in sorted(fin, key=lambda x: str(x.get("REPDTE"))):
@@ -95,7 +102,7 @@ def build_bank(inst, group, fin):
             "eq_assets": round(e / a * 100, 3) if e else None,
             "loans_dep": round(l / d * 100, 2) if l and d else None,
         })
-    return {"cert": inst.get("CERT"), "name": inst.get("NAME"), "city": inst.get("CITY"), "state": inst.get("STALP"), "group": group, "quarters": q}
+    return {"cert": inst.get("CERT"), "name": inst.get("NAME"), "city": inst.get("CITY"), "state": inst.get("STALP"), "est": est_year(inst.get("ESTYMD")), "group": group, "quarters": q}
 
 
 def main():
