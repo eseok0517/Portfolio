@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Back-test the Bank Health Monitor's five warning screens against real FDIC bank failures.
+Back-test the Bank Health Monitor's six warning screens against real FDIC bank failures.
 
 For each failed bank, the screens are applied to the call report from about one year before failure.
 The same screens are applied to a sample of banks that did not fail, at the same calendar dates, so the
@@ -26,7 +26,7 @@ WINDOWS = [
     {"id": "recent", "name": "2023-2026 rate shock", "from": "2023-01-01", "to": "2026-12-31",
      "asof": ["20211231", "20220630", "20221231"], "max_failed": 60},
 ]
-FLAG_NAMES = ["Low ROA", "Margin squeeze", "Thin equity", "High loans/deposits", "Deposit outflow"]
+FLAG_NAMES = ["Low ROA", "Margin squeeze", "Thin equity", "High loans/deposits", "Deposit outflow", "Asset quality"]
 N_CONTROLS = 250
 
 
@@ -40,21 +40,42 @@ def parse_date(s):
     return None
 
 
-def flags_at(qs, i):
-    """Same rules as the dashboard (bank-monitor.js)."""
+THRESH = {"roa": 0.5, "dnim": 0.25, "eq": 8.0, "ld": 90.0, "ddep": 5.0, "nc": 3.0}
+# alternative cutoffs tested for each screen: (flag name, metric key, direction, values)
+SWEEP = [
+    ("Low ROA", "roa", "lt", [0.0, 0.25, 0.5, 0.75, 1.0]),
+    ("Margin squeeze", "dnim", "ge", [0.1, 0.25, 0.5]),
+    ("Thin equity", "eq", "lt", [6.0, 7.0, 8.0, 9.0, 10.0]),
+    ("High loans/deposits", "ld", "gt", [70.0, 80.0, 90.0, 100.0]),
+    ("Deposit outflow", "ddep", "ge", [2.0, 5.0, 10.0]),
+    ("Asset quality", "nc", "gt", [1.0, 2.0, 3.0, 5.0]),
+]
+
+
+def metrics_at(qs, i):
     q = qs[i]
-    out = []
-    if q["roa"] is not None and q["roa"] < 0.5:
-        out.append("Low ROA")
-    if i >= 4 and q["nim"] is not None and qs[i - 4]["nim"] is not None and q["nim"] - qs[i - 4]["nim"] <= -0.25:
-        out.append("Margin squeeze")
-    if q["eq_assets"] is not None and q["eq_assets"] < 8:
-        out.append("Thin equity")
-    if q["loans_dep"] is not None and q["loans_dep"] > 90:
-        out.append("High loans/deposits")
-    if i >= 4 and q["deposits"] and qs[i - 4]["deposits"] and (q["deposits"] / qs[i - 4]["deposits"] - 1) * 100 <= -5:
-        out.append("Deposit outflow")
-    return out
+    m = {"roa": q["roa"], "eq": q["eq_assets"], "ld": q["loans_dep"], "nc": q["noncurrent"], "dnim": None, "ddep": None}
+    if i >= 4:
+        if q["nim"] is not None and qs[i - 4]["nim"] is not None:
+            m["dnim"] = qs[i - 4]["nim"] - q["nim"]  # points of margin lost (positive = squeeze)
+        if q["deposits"] and qs[i - 4]["deposits"]:
+            m["ddep"] = -(q["deposits"] / qs[i - 4]["deposits"] - 1) * 100  # percent of deposits lost
+    return m
+
+
+def hit(m, key, direction, t):
+    v = m.get(key)
+    if v is None:
+        return False
+    return v < t if direction == "lt" else v > t if direction == "gt" else v >= t
+
+
+def flags_at(qs, i):
+    """Same rules and cutoffs as the dashboard (bank-monitor.js)."""
+    m = metrics_at(qs, i)
+    cur = {"Low ROA": ("roa", "lt", THRESH["roa"]), "Margin squeeze": ("dnim", "ge", THRESH["dnim"]), "Thin equity": ("eq", "lt", THRESH["eq"]),
+           "High loans/deposits": ("ld", "gt", THRESH["ld"]), "Deposit outflow": ("ddep", "ge", THRESH["ddep"]), "Asset quality": ("nc", "gt", THRESH["nc"])}
+    return [name for name, (k, d, t) in cur.items() if hit(m, k, d, t)], m
 
 
 def history(cert):
@@ -80,7 +101,11 @@ def summarize(failed, controls):
     per = {}
     for f in FLAG_NAMES:
         per[f] = {"failed": rate(failed, lambda r, f=f: f in r["flags"]), "survivors": rate(controls, lambda r, f=f: f in r["flags"])}
+    sweep = {}
+    for name, key, d, vals in SWEEP:
+        sweep[name] = [{"cutoff": t, "failed": rate(failed, lambda r, k=key, d=d, t=t: hit(r["m"], k, d, t)), "survivors": rate(controls, lambda r, k=key, d=d, t=t: hit(r["m"], k, d, t))} for t in vals]
     return {
+        "sweep": sweep,
         "failed_n": len(failed), "survivor_obs": len(controls),
         "failed_any": rate(failed, lambda r: len(r["flags"]) >= 1), "survivors_any": rate(controls, lambda r: len(r["flags"]) >= 1),
         "failed_2plus": rate(failed, lambda r: len(r["flags"]) >= 2), "survivors_2plus": rate(controls, lambda r: len(r["flags"]) >= 2),
@@ -128,13 +153,15 @@ def main():
             i = index_on_or_before(qs, target)
             if i is None or i < 1:
                 continue
-            failed.append({"name": r.get("NAME"), "failed": d.strftime("%Y-%m-%d"), "asof": qs[i]["date"], "assets": qs[i]["assets"], "flags": flags_at(qs, i)})
+            fl, m = flags_at(qs, i)
+            failed.append({"name": r.get("NAME"), "failed": d.strftime("%Y-%m-%d"), "asof": qs[i]["date"], "assets": qs[i]["assets"], "flags": fl, "m": m})
         controls = []
         for cert, qs in control_hist.items():
             for ymd in w["asof"]:
                 i = index_on_or_before(qs, ymd)
                 if i is not None and qs[i]["date"] == ymd and i >= 1:
-                    controls.append({"cert": cert, "asof": ymd, "flags": flags_at(qs, i)})
+                    fl, m = flags_at(qs, i)
+                    controls.append({"cert": cert, "asof": ymd, "flags": fl, "m": m})
         s = summarize(failed, controls)
         s.update({"id": w["id"], "name": w["name"], "asof_dates": w["asof"],
                   "examples": [{"name": f["name"], "failed": f["failed"], "asof": f["asof"], "flags": f["flags"]} for f in sorted(failed, key=lambda x: -(x["assets"] or 0))[:6]]})

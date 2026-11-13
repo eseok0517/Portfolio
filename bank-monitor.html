@@ -46,14 +46,14 @@ svg.ch{width:100%;height:auto;display:block}.legend{display:flex;gap:14px;flex-w
 <div class="bar-top"><label class="fine">Measure <select id="met"></select></label><div class="chips" id="chips" role="group" aria-label="Choose banks"></div></div>
 <div class="panel"><div id="tr"></div><div class="legend" id="lg"></div></div></section>
 </div>
-<section id="bt" class="hidden"><h2>Did the warning screens work?</h2><p class="sub">The five screens were applied to banks about a year before they failed, and to banks that survived, using the same rules and the same dates.</p><p id="btText" style="max-width:820px"></p><div id="btTables"></div></section>
+<section id="bt" class="hidden"><h2>Did the warning screens work?</h2><p class="sub">The six screens were applied to banks about a year before they failed, and to banks that survived, using the same rules and the same dates.</p><p id="btText" style="max-width:820px"></p><div id="btTables"></div></section>
 <section><h2>Method and limits</h2><ul class="method">
-<li><b>Source.</b> FDIC BankFind API, quarterly call reports. Arizona banks are active institutions with an Arizona headquarters. Two comparison groups are used: the ten largest active U.S. banks by assets, and about 30 banks of similar size ($70 million to $1.5 billion) headquartered in New Mexico, Nevada, Utah, Colorado and Texas, sampled evenly by size. A weekly GitHub Action updates the file.</li>
+<li><b>Source.</b> FDIC BankFind API, quarterly call reports. Arizona banks are active institutions with an Arizona headquarters. Two comparison groups are used: the ten largest active U.S. banks by assets, and about 40 banks of similar size ($70 million to $1.5 billion) from other states, sampled evenly by size. A weekly GitHub Action updates the file.</li>
 <li><b>Measures.</b> Return on assets, net interest margin and efficiency ratio are as reported by the FDIC. Equity / assets and loans / deposits are computed from reported balances. Deposit growth compares each quarter with the same quarter a year earlier.</li>
 <li><b>Limits.</b> Many Arizona-headquartered institutions are small, so single-quarter figures can swing. Bank holding companies and bank subsidiaries can differ, and this analysis uses the bank-level filing. National banks that operate heavily in Arizona but are headquartered elsewhere appear only if they are among the ten largest. Regulatory capital ratios are not shown because not every institution reports every field.</li>
 </ul></section>
 </main>
 <footer><span>Ehahn Seok · Michigan State University</span><span><a href="equity-risk.html">Equity risk and regimes</a> · <a href="index.html">Back to portfolio</a></span></footer>
-<script src="findings.js?v=2"></script>
-<script src="bank-monitor.js?v=3"></script>
+<script src="findings.js?v=4"></script>
+<script src="bank-monitor.js?v=4"></script>
 </body></html>

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Download quarterly call-report data from the FDIC BankFind API (public) for banks headquartered in
-Arizona, for the ten largest U.S. banks, and for a size-matched peer group of banks in neighboring states, and write data/banks.json for the Bank Health Monitor.
+Arizona, for the ten largest U.S. banks, and for a size-matched peer group of banks from other states, and write data/banks.json for the Bank Health Monitor.
 
 API: https://api.fdic.gov/banks  (endpoints /institutions and /financials). Unknown field names are
 silently dropped by the API, so optional ratios are stored as null when absent.
@@ -62,17 +62,14 @@ def institutions_live():
     return az, big
 
 
-PEER_STATES = {"NM", "NV", "UT", "CO", "TX"}
-
-
-def peers_live(n=30):
-    """Similar-sized comparison banks: active, $70M to $1.5B in assets, headquartered in neighboring states."""
+def peers_live(n=40):
+    """Similar-sized comparison banks: active, $70M to $1.5B in assets, headquartered anywhere in the U.S., sampled evenly by size."""
     try:
         r = rows(get("institutions", {"filters": "ACTIVE:1 AND ASSET:[70000 TO 1500000]", "fields": ",".join(INST_FIELDS), "sort_by": "ASSET", "sort_order": "DESC", "limit": 10000, "format": "json"}))
     except Exception as e:  # noqa: BLE001
         print(f"peer group unavailable: {e}", file=sys.stderr)
         return []
-    pool = sorted((x for x in r if x.get("STALP") in PEER_STATES), key=lambda x: num(x.get("ASSET")) or 0)
+    pool = sorted((x for x in r if x.get("STALP") != "AZ"), key=lambda x: num(x.get("ASSET")) or 0)
     if len(pool) <= n:
         return pool
     step = (len(pool) - 1) / (n - 1)
