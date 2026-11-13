@@ -93,9 +93,9 @@ function dash(){
  var d=[],mx=1;for(var i=29;i>=0;i--){var dt=new Date(calc.now.getTime()-i*DAY),k=dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
   var v=S.log.reduce(function(s,l){return s+(l.dir==='OUT'&&l.ts.slice(0,10)===k&&(room==='ALL'||l.room===room)?l.total:0)},0);d.push([k,v]);mx=Math.max(mx,v)}
  var W=620,H=190,pl=46,pb=22,bw=(W-pl)/30,svg='';
- for(var g=0;g<=4;g++){var y=8+(H-pb-8)*(1-g/4);svg+='<line x1="'+pl+'" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="#e3dfdf"/><text x="'+(pl-6)+'" y="'+(y+4)+'" font-size="10" text-anchor="end" fill="#625859">$'+fmt(mx*g/4)+'</text>'}
- d.forEach(function(p,i){var h=(H-pb-8)*p[1]/mx;svg+='<rect x="'+(pl+i*bw+bw*.15)+'" y="'+(H-pb-h)+'" width="'+bw*.7+'" height="'+h+'" fill="#ce142d"><title>'+p[0]+': '+money(p[1])+'</title></rect>'});
- [0,15,29].forEach(function(i){svg+='<text x="'+(pl+i*bw+bw/2)+'" y="'+(H-6)+'" font-size="10" text-anchor="middle" fill="#625859">'+d[i][0].slice(5)+'</text>'});
+ for(var g=0;g<=4;g++){var y=8+(H-pb-8)*(1-g/4);svg+='<line x1="'+pl+'" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="#dde5e1"/><text x="'+(pl-6)+'" y="'+(y+4)+'" font-size="10" text-anchor="end" fill="#55655f">$'+fmt(mx*g/4)+'</text>'}
+ d.forEach(function(p,i){var h=(H-pb-8)*p[1]/mx;svg+='<rect x="'+(pl+i*bw+bw*.15)+'" y="'+(H-pb-h)+'" width="'+bw*.7+'" height="'+h+'" fill="#1a6247"><title>'+p[0]+': '+money(p[1])+'</title></rect>'});
+ [0,15,29].forEach(function(i){svg+='<text x="'+(pl+i*bw+bw/2)+'" y="'+(H-6)+'" font-size="10" text-anchor="middle" fill="#55655f">'+d[i][0].slice(5)+'</text>'});
  $('daily').innerHTML='<svg class="ch" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Daily checkout cost">'+svg+'</svg>';
  // status
  var C=[['OK','var(--ok)'],['REORDER','#c2763c'],['OUT','var(--bad)']],cnt=function(s){return L.filter(function(i){return i._st===s}).length};

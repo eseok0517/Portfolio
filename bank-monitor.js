@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 var $=function(i){return document.getElementById(i)},D,sel=[],M='roa';
-var COL=['#ce142d','#b5651d','#2f6f9f','#7a4e9e','#c2453a','#2a9d8f','#8a6d3b','#5c5758'];
+var COL=['#1a6247','#b5651d','#2f6f9f','#7a4e9e','#c2453a','#2a9d8f','#8a6d3b','#555e5a'];
 var MET={roa:['Return on assets (%)',function(q){return q.roa}],nim:['Net interest margin (%)',function(q){return q.nim}],eqa:['Equity / assets (%)',function(q){return q.eq_assets}],ld:['Loans / deposits (%)',function(q){return q.loans_dep}],dep:['Deposit growth, year over year (%)',null],eff:['Efficiency ratio (%)',function(q){return q.eff}],nc:['Noncurrent loans / loans (%)',function(q){return q.noncurrent}]};
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function money(k){if(k==null)return '—';var d=k*1000;return '$'+(d>=1e12?(d/1e12).toFixed(2)+'T':d>=1e9?(d/1e9).toFixed(1)+'B':(d/1e6).toFixed(0)+'M')}
@@ -34,13 +34,13 @@ function chart(az,big,peer){
  $('met').innerHTML=avail.map(function(m){return '<option value="'+m+'"'+(m===M?' selected':'')+'>'+MET[m][0]+'</option>'}).join('');$('met').onchange=function(){M=this.value;render()};
  var dates=big[0].quarters.map(function(q){return q.date}).slice(-12),S=[];
  sel.forEach(function(c,k){var b=az.filter(function(x){return x.cert==c})[0];if(!b)return;var m={};b.quarters.forEach(function(q,i){m[q.date]=val(b,M,i)});S.push({name:b.name,color:COL[k%COL.length],v:dates.map(function(d){return m[d]==null?null:m[d]})})});
- S.push({name:'Ten largest banks (median)',color:'#5c5758',dash:true,v:dates.map(function(d,i){return med(big.map(function(b){var j=b.quarters.map(function(q){return q.date}).indexOf(d);return j<0?null:val(b,M,j)}))})});
+ S.push({name:'Ten largest banks (median)',color:'#555e5a',dash:true,v:dates.map(function(d,i){return med(big.map(function(b){var j=b.quarters.map(function(q){return q.date}).indexOf(d);return j<0?null:val(b,M,j)}))})});
  if(peer&&peer.length>=8)S.push({name:'Similar-sized peers (median)',color:'#9b6a12',dash:true,v:dates.map(function(d){return med(peer.map(function(b){var j=b.quarters.map(function(q){return q.date}).indexOf(d);return j<0?null:val(b,M,j)}))})});
  var all=[];S.forEach(function(s){s.v.forEach(function(x){if(x!=null)all.push(x)})});if(!all.length){$('tr').innerHTML='<p class="fine">No data for this measure.</p>';return}
  var lo=Math.min.apply(null,all),hi=Math.max.apply(null,all),pad=(hi-lo||1)*.1;lo-=pad;hi+=pad;
  var W=760,H=280,pl=48,pr=10,pt=10,pb=26,x=function(i){return pl+(W-pl-pr)*i/(dates.length-1)},y=function(v){return pt+(H-pt-pb)*(1-(v-lo)/(hi-lo))},svg='';
- for(var g=0;g<5;g++){var v=lo+(hi-lo)*g/4;svg+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#e3dfdf"/><text x="'+(pl-6)+'" y="'+(y(v)+4)+'" font-size="10" text-anchor="end" fill="#625859">'+v.toFixed(1)+'</text>'}
- dates.forEach(function(d,i){if(i%3===0||i===dates.length-1)svg+='<text x="'+x(i)+'" y="'+(H-8)+'" font-size="10" text-anchor="'+(i===dates.length-1?'end':i===0?'start':'middle')+'" fill="#625859">'+qd(d)+'</text>'});
+ for(var g=0;g<5;g++){var v=lo+(hi-lo)*g/4;svg+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#dde5e1"/><text x="'+(pl-6)+'" y="'+(y(v)+4)+'" font-size="10" text-anchor="end" fill="#55655f">'+v.toFixed(1)+'</text>'}
+ dates.forEach(function(d,i){if(i%3===0||i===dates.length-1)svg+='<text x="'+x(i)+'" y="'+(H-8)+'" font-size="10" text-anchor="'+(i===dates.length-1?'end':i===0?'start':'middle')+'" fill="#55655f">'+qd(d)+'</text>'});
  S.forEach(function(s){var pts=[],seg='';s.v.forEach(function(v,i){if(v==null){if(pts.length)seg+='<polyline fill="none" stroke="'+s.color+'" stroke-width="'+(s.dash?1.6:2)+'"'+(s.dash?' stroke-dasharray="5 4"':'')+' points="'+pts.join(' ')+'"/>';pts=[]}else pts.push(x(i).toFixed(1)+','+y(v).toFixed(1))});if(pts.length)seg+='<polyline fill="none" stroke="'+s.color+'" stroke-width="'+(s.dash?1.6:2)+'"'+(s.dash?' stroke-dasharray="5 4"':'')+' points="'+pts.join(' ')+'"/>';svg+=seg});
  $('tr').innerHTML='<svg class="ch" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+MET[M][0]+' by quarter">'+svg+'</svg>';
  $('lg').innerHTML=S.map(function(s){return '<span><u style="background:'+s.color+'"></u>'+esc(s.name)+'</span>'}).join('')}

@@ -11,13 +11,13 @@ async function purchasingPreview(){
 async function macroPreview(){
  const r=await fetch('data/equities.json',{cache:'no-store'});if(!r.ok)throw Error('Equity data unavailable');
  const d=await r.json(),n=Math.min(121,d.months.length),start=d.months.length-n;
- const cols={SPY:'#282021',QQQ:'#2f6f9f',AAPL:'#878081',MSFT:'#4aa3a0',NVDA:'#ce142d',JPM:'#9b522e',GS:'#c28a2e',XOM:'#8a4f9e',JNJ:'#b5527a',TLT:'#6b7fd7'};
+ const cols={SPY:'#1d2b27',QQQ:'#2f6f9f',AAPL:'#7d8a86',MSFT:'#4aa3a0',NVDA:'#1a6247',JPM:'#9b522e',GS:'#c28a2e',XOM:'#8a4f9e',JNJ:'#b5527a',TLT:'#6b7fd7'};
  const series=d.tickers.map(t=>{const p=t.prices.slice(start),b=p.find(x=>x!=null);return{s:t.symbol,v:p.map(x=>x==null?null:100*x/b)}}).filter(x=>x.v.some(y=>y!=null));
  const all=series.flatMap(x=>x.v.filter(y=>y!=null)),lo=Math.log(Math.min(...all)),hi=Math.log(Math.max(...all));
  const W=460,H=250,pl=34,pr=34,pt=10,pb=14,X=i=>pl+(W-pl-pr)*i/(n-1),Y=v=>pt+(H-pt-pb)*(1-(Math.log(v)-lo)/(hi-lo||1));
  const ticks=[100,300,1000,3000,10000].filter(t=>Math.log(t)>=lo&&Math.log(t)<=hi);
  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Growth of 100 dollars in ten stocks and ETFs, log scale, ${d.months[start]} to ${d.months.at(-1)}">`;
- ticks.forEach(t=>{svg+=`<path d="M${pl} ${Y(t)}H${W-pr}" stroke="#d3dde3" stroke-width="1"/><text x="${pl-5}" y="${Y(t)+3}" font-size="9" text-anchor="end" fill="#625859">${t>=1000?(t/1000)+'k':t}</text>`});
+ ticks.forEach(t=>{svg+=`<path d="M${pl} ${Y(t)}H${W-pr}" stroke="#d3dde3" stroke-width="1"/><text x="${pl-5}" y="${Y(t)+3}" font-size="9" text-anchor="end" fill="#55655f">${t>=1000?(t/1000)+'k':t}</text>`});
  const ends=[];
  series.forEach(x=>{const pts=x.v.map((y,i)=>y==null?null:X(i)+','+Y(y)).filter(Boolean);svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${cols[x.s]||'#555'}" stroke-width="${x.s==='SPY'?2.4:1.5}" stroke-linejoin="round"/>`;const l=x.v.at(-1);if(l!=null)ends.push({s:x.s,y:Y(l)})});
  ends.sort((a,b)=>a.y-b.y);for(let i=1;i<ends.length;i++)if(ends[i].y-ends[i-1].y<11)ends[i].y=ends[i-1].y+11;
@@ -50,7 +50,7 @@ async function bankCard(){
  const az=D.banks.filter(b=>b.group==='az').sort((a,b)=>last(b).assets-last(a).assets),big=D.banks.filter(b=>b.group==='big');
  if(az.length<3||big.length<3)return;
  const rows=[...az].sort((a,b)=>flags(b).length-flags(a).length||last(b).assets-last(a).assets).slice(0,2);
- document.getElementById('bank-viz').outerHTML='<div class="bk-rows" id="bank-viz"><div style="background:#f6f4f4;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)"><span>Most flagged banks</span><em>ROA</em></div>'+rows.map(b=>{const f=flags(b);return `<div><span><b>${b.name.replace(/, N\.A\.| National Association/,'')}</b><span class="bk-chips">${f.length?f.map(x=>'<i>'+x+'</i>').join(''):'<i class="ok">No flags</i>'}</span></span><em>${last(b).roa==null?'—':last(b).roa.toFixed(2)+'%'}</em></div>`}).join('')+'</div>';
+ document.getElementById('bank-viz').outerHTML='<div class="bk-rows" id="bank-viz"><div style="background:#f3f7f5;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)"><span>Most flagged banks</span><em>ROA</em></div>'+rows.map(b=>{const f=flags(b);return `<div><span><b>${b.name.replace(/, N\.A\.| National Association/,'')}</b><span class="bk-chips">${f.length?f.map(x=>'<i>'+x+'</i>').join(''):'<i class="ok">No flags</i>'}</span></span><em>${last(b).roa==null?'—':last(b).roa.toFixed(2)+'%'}</em></div>`}).join('')+'</div>';
  const F=Findings.bank(D,BT);
  if(F){const bf=document.getElementById('bank-finding');if(bf)bf.textContent=F.card;const c=document.getElementById('bank-result');if(c)c.textContent=F.headline}
 }

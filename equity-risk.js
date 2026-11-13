@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 var $=function(i){return document.getElementById(i)};
-var COL=['#ce142d','#b5651d','#2f6f9f','#7a4e9e','#c2453a','#6b8e23','#2a9d8f','#8a6d3b','#5c5758','#d4a017'];
+var COL=['#1a6247','#b5651d','#2f6f9f','#7a4e9e','#c2453a','#6b8e23','#2a9d8f','#8a6d3b','#555e5a','#d4a017'];
 var D,sel=['SPY','QQQ','JPM','GS','TLT'],range='all',W={};
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function pc(x,d){return isFinite(x)?(x*100).toFixed(d==null?1:d)+'%':'n/a'}
@@ -34,12 +34,12 @@ function lineChart(el,series,o){
  var mn=o.min!=null?o.min:Math.min.apply(null,all),mx=o.max!=null?o.max:Math.max.apply(null,all),log=o.log;
  if(log){mn=Math.max(mn,1)}var f=function(v){return log?Math.log(v):v},lo=f(mn),hi=f(mx);if(hi===lo)hi=lo+1;
  var n=D.months.length,x=function(i){return pl+(W_-pl-pr)*(i-o.i0)/Math.max(1,(n-1-o.i0))},y=function(v){return pt+(H-pt-pb)*(1-(f(v)-lo)/(hi-lo))};
- var svg='',ticks=5;for(var g=0;g<ticks;g++){var v=log?Math.exp(lo+(hi-lo)*g/(ticks-1)):mn+(mx-mn)*g/(ticks-1),yy=y(v);svg+='<line x1="'+pl+'" x2="'+(W_-pr)+'" y1="'+yy+'" y2="'+yy+'" stroke="#e3dfdf"/><text x="'+(pl-6)+'" y="'+(yy+4)+'" font-size="10" text-anchor="end" fill="#625859">'+o.fmt(v)+'</text>'}
+ var svg='',ticks=5;for(var g=0;g<ticks;g++){var v=log?Math.exp(lo+(hi-lo)*g/(ticks-1)):mn+(mx-mn)*g/(ticks-1),yy=y(v);svg+='<line x1="'+pl+'" x2="'+(W_-pr)+'" y1="'+yy+'" y2="'+yy+'" stroke="#dde5e1"/><text x="'+(pl-6)+'" y="'+(yy+4)+'" font-size="10" text-anchor="end" fill="#55655f">'+o.fmt(v)+'</text>'}
  var ys=[];for(var i=o.i0;i<n;i++){var m=D.months[i];if(m.slice(5)==='01'&&(+m.slice(0,4))%Math.max(1,Math.round((n-o.i0)/12/6))===0)ys.push(i)}
- if(o.zero!=null){svg+='<line x1="'+pl+'" x2="'+(W_-pr)+'" y1="'+y(o.zero)+'" y2="'+y(o.zero)+'" stroke="#948d8e"/>'}
- ys.forEach(function(i){svg+='<text x="'+x(i)+'" y="'+(H-6)+'" font-size="10" text-anchor="middle" fill="#625859">'+D.months[i].slice(0,4)+'</text>'});
+ if(o.zero!=null){svg+='<line x1="'+pl+'" x2="'+(W_-pr)+'" y1="'+y(o.zero)+'" y2="'+y(o.zero)+'" stroke="#8a9792"/>'}
+ ys.forEach(function(i){svg+='<text x="'+x(i)+'" y="'+(H-6)+'" font-size="10" text-anchor="middle" fill="#55655f">'+D.months[i].slice(0,4)+'</text>'});
  series.forEach(function(s){svg+='<polyline fill="none" stroke="'+s.color+'" stroke-width="'+(s.w||1.8)+'" stroke-linejoin="round" points="'+s.pts.map(function(p){return x(p[0]).toFixed(1)+','+y(p[1]).toFixed(1)}).join(' ')+'"/>'});
- svg+='<line id="'+o.id+'x" y1="'+pt+'" y2="'+(H-pb)+'" stroke="#625859" stroke-dasharray="3 3" style="display:none"/>';
+ svg+='<line id="'+o.id+'x" y1="'+pt+'" y2="'+(H-pb)+'" stroke="#55655f" stroke-dasharray="3 3" style="display:none"/>';
  el.innerHTML='<svg class="ch" viewBox="0 0 '+W_+' '+H+'" role="img" aria-label="'+o.label+'">'+svg+'</svg>';
  if(o.tip){var sv=el.firstChild,tip=$('tip'),box=el.parentNode;sv.onmousemove=function(e){var r=sv.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W_,i=Math.round(o.i0+(px-pl)/(W_-pl-pr)*(n-1-o.i0));if(i<o.i0||i>=n)return;
    var line=document.getElementById(o.id+'x');line.style.display='';line.setAttribute('x1',x(i));line.setAttribute('x2',x(i));
@@ -72,7 +72,7 @@ function render(){
  // correlation (common months)
  var R=S.map(function(x){var m={};rets(x.s).forEach(function(r){m[r.i]=r.r});return m}),common=Object.keys(R[0]).filter(function(k){return R.every(function(m){return m[k]!=null})});
  var cor=function(a,b){var xa=common.map(function(k){return R[a][k]}),xb=common.map(function(k){return R[b][k]}),ma=mean(xa),mb=mean(xb),cv=0,va=0,vb=0;for(var k=0;k<xa.length;k++){cv+=(xa[k]-ma)*(xb[k]-mb);va+=(xa[k]-ma)*(xa[k]-ma);vb+=(xb[k]-mb)*(xb[k]-mb)}return cv/Math.sqrt(va*vb)};
- if(common.length>=12&&S.length>1){$('cor').innerHTML='<thead><tr><th></th>'+S.map(function(x){return '<th class="n">'+x.sym+'</th>'}).join('')+'</tr></thead><tbody>'+S.map(function(a,i){return '<tr><th>'+a.sym+'</th>'+S.map(function(b,j){var c=i===j?1:cor(i,j),al=Math.abs(c),bg=c>=0?'rgba(200,16,46,'+(al*.7).toFixed(2)+')':'rgba(47,111,159,'+(al*.7).toFixed(2)+')';return '<td style="background:'+bg+';color:'+(al>.55?'#fff':'#282021')+'">'+c.toFixed(2)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody>'}else $('cor').innerHTML='<tbody><tr><td class="fine">Pick at least two securities with a year of overlapping data.</td></tr></tbody>';
+ if(common.length>=12&&S.length>1){$('cor').innerHTML='<thead><tr><th></th>'+S.map(function(x){return '<th class="n">'+x.sym+'</th>'}).join('')+'</tr></thead><tbody>'+S.map(function(a,i){return '<tr><th>'+a.sym+'</th>'+S.map(function(b,j){var c=i===j?1:cor(i,j),al=Math.abs(c),bg=c>=0?'rgba(26,98,71,'+(al*.7).toFixed(2)+')':'rgba(162,68,42,'+(al*.7).toFixed(2)+')';return '<td style="background:'+bg+';color:'+(al>.55?'#fff':'#1d2b27')+'">'+c.toFixed(2)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody>'}else $('cor').innerHTML='<tbody><tr><td class="fine">Pick at least two securities with a year of overlapping data.</td></tr></tbody>';
  regimes(S);portfolio(S);
 }
 
@@ -100,7 +100,7 @@ function portfolio(S){
  var st=function(r,ix){var g=1,pk=1,mdd=0,v=[1];r.forEach(function(x){g*=1+x;pk=Math.max(pk,g);mdd=Math.min(mdd,g/pk-1);v.push(g)});var vol=sd(r)*Math.sqrt(12),c=Math.pow(g,12/r.length)-1,ex=r.map(function(x,k){return x-rfm(ix[k])});return{c:c,vol:vol,sh:mean(ex)*12/vol,mdd:mdd,v:v}};
  var p=st(pr,idx),b=st(br,idx);
  $('pk').innerHTML=[['Portfolio return / yr',pc(p.c),'SPY '+pc(b.c)],['Volatility',pc(p.vol),'SPY '+pc(b.vol)],['Sharpe ratio',p.sh.toFixed(2),'SPY '+b.sh.toFixed(2)],['Max drawdown',pc(p.mdd),'SPY '+pc(b.mdd)]].map(function(k){return '<div class="kpi"><div class="l">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>'}).join('');
- var pts=function(v){return v.map(function(x,k){return[k?idx[k-1]:idx[0]-1,10000*x]})},s1=[{name:'Your portfolio',color:'#ce142d',pts:pts(p.v),w:2.2},{name:'SPY',color:'#948d8e',pts:pts(b.v)}];
+ var pts=function(v){return v.map(function(x,k){return[k?idx[k-1]:idx[0]-1,10000*x]})},s1=[{name:'Your portfolio',color:'#1a6247',pts:pts(p.v),w:2.2},{name:'SPY',color:'#8a9792',pts:pts(b.v)}];
  lineChart($('pg'),s1,{id:'p',i0:idx[0]-1,fmt:function(v){return '$'+Math.round(v).toLocaleString('en-US')},log:true,h:260,label:'Portfolio versus SPY growth'});legend($('plg'),s1);
 }
 
