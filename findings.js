@@ -13,6 +13,7 @@ function flags(b){var qs=b.quarters,n=qs.length,q=qs[n-1],y=yoy(b),f=[];
  if(q.noncurrent!=null&&q.noncurrent>3)f.push('Asset quality');return f}
 var W=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
 function w(n){return W[n]!=null?W[n]:String(n)}
+function lc(t){return t.charAt(0).toLowerCase()+t.slice(1)}
 function cap(t){return t.charAt(0).toUpperCase()+t.slice(1)}
 function pc(x,d){return x==null?'n/a':x.toFixed(d==null?2:d)+'%'}
 function qlabel(s){return 'Q'+Math.ceil(+s.slice(4,6)/3)+' '+s.slice(0,4)}
@@ -40,6 +41,34 @@ function bank(D,BT){
  if(giants.length){var tot=az.reduce(function(s,b){return s+last(b).assets},0),gs=giants.reduce(function(s,b){return s+last(b).assets},0);
   items.push([cap(w(giants.length))+' bank'+(giants.length>1?'s hold':' holds')+' '+Math.round(100*gs/tot)+'% of Arizona-headquartered bank assets.','That is why the community banks are compared with similar-sized peers and the giants with the ten largest banks.'])}
  var bt=backtest(BT);if(bt){items.push([bt.head,bt.text]);out.backtest=bt;var sg=signal(BT);if(sg)items.push(sg)}
+ /* structured layout for the dashboard page */
+ var share=function(g){return g.length?Math.round(100*g.filter(function(b){return flags(b).length}).length/g.length):null};
+ var tiles=[],groups=[],g1=[],g2=[],g3=[];
+ var primary=hasPeer?comm:az,cmpG=hasPeer?peer:big,pl=hasPeer?'similar-sized peers':'the ten largest banks';
+ tiles.push(['Median ROA, Arizona '+(hasPeer?'community banks':'banks'),pc(L(primary,'roa')),(hasPeer?'Peers '+pc(L(peer,'roa'))+' · ':'')+'Ten largest '+pc(L(big,'roa'))]);
+ tiles.push(['Banks tripping a screen',nfA+' of '+az.length,hasPeer?'Community '+share(comm)+'% · peers '+share(peer)+'%':'Ten largest: '+big.filter(function(b){return flags(b).length}).length+' of '+big.length]);
+ if(bt)tiles.push(['Failures flagged a year early',Math.round(bt.window.failed_any)+'%','Survivors flagged '+Math.round(bt.window.survivors_any)+'%']);
+ if(giants.length){var tt=az.reduce(function(s,b){return s+last(b).assets},0),gg=giants.reduce(function(s,b){return s+last(b).assets},0);tiles.push(['Assets held by '+w(giants.length)+' banks',Math.round(100*gg/tt)+'%','of '+money(tt)+' in Arizona-headquartered bank assets'])}
+ var rl=L(primary,'roa')<L(cmpG,'roa')?'less':'more';
+ out.lead='Arizona’s '+(hasPeer?w(comm.length)+' community banks':w(az.length)+' banks')+' earned '+rl+' than '+pl+' ('+pc(L(primary,'roa'))+' against '+pc(L(cmpG,'roa'))+' median return on assets)'+(hasPeer?' and were flagged '+(share(comm)>share(peer)+5?'more':share(comm)<share(peer)-5?'less':'about as')+(Math.abs(share(comm)-share(peer))<=5?' often as them':' often than them')+' ('+share(comm)+'% against '+share(peer)+'%)':'')+'.'+(bt?' In a back-test, the screens flagged '+Math.round(bt.window.failed_any)+'% of banks a year before they failed but also '+Math.round(bt.window.survivors_any)+'% of survivors, so they are a tool for choosing which banks to review, not a forecast of failure.':'');
+ if(hasPeer){
+  var rowsT=[['Median ROA',function(g){return pc(L(g,'roa'))}],['Net interest margin',function(g){return pc(L(g,'nim'))}],['Equity / assets',function(g){return pc(L(g,'eq_assets'),1)}],['Loans / deposits',function(g){return pc(L(g,'loans_dep'),0)}],['Efficiency ratio',function(g){return pc(L(g,'eff'),0)}],['Banks tripping a screen',function(g){return share(g)+'%'}]];
+  out.table={cols:['Arizona community banks ('+comm.length+')','Similar-sized peers ('+peer.length+')','Ten largest U.S. banks'],rows:rowsT.map(function(r){return [r[0],r[1](comm),r[1](peer),r[1](big)]})};
+  g1.push([near?'Size, not geography, explains most of the gap to the largest banks.':'Neither comparison group fully explains Arizona\u2019s results.',near?'Arizona community banks look like their similar-sized peers on funding and costs and unlike the ten largest banks, so the comparison with the largest banks mostly reflects scale.':'Arizona community banks differ from both groups on funding and costs, so neither comparison alone explains their results.']);
+  g1.push(['Profitability is '+(L(comm,'roa')<L(peer,'roa')?'below':'above')+' peers by '+Math.abs(L(comm,'roa')-L(peer,'roa')).toFixed(2)+' points.','The ten Arizona community banks earned a median '+pc(L(comm,'roa'))+' against '+pc(L(peer,'roa'))+' for peers. With ten banks, one or two weak quarters can move that median, so treat the gap as a lead to examine.']);
+ }else{
+  out.table={cols:['Arizona banks ('+az.length+')','Ten largest U.S. banks'],rows:[['Median ROA',pc(L(az,'roa')),pc(L(big,'roa'))],['Net interest margin',pc(L(az,'nim')),pc(L(big,'nim'))],['Loans / deposits',pc(L(az,'loans_dep'),0),pc(L(big,'loans_dep'),0)],['Efficiency ratio',pc(L(az,'eff'),0),pc(L(big,'eff'),0)]]};
+  g1.push(['A size-matched peer group is added after the next data refresh.','Until then, Arizona banks are compared only with the ten largest U.S. banks, which differ in size and business model.']);
+ }
+ var cnt={};az.forEach(function(b){flags(b).forEach(function(x){cnt[x]=(cnt[x]||0)+1})});
+ var top=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]}).slice(0,2);
+ g2.push([cap(w(nfA))+' of '+w(az.length)+' Arizona banks tripped at least one screen.',top.length?'The most common were '+lc(top[0])+' ('+w(cnt[top[0]])+' banks)'+(top[1]?' and '+lc(top[1])+' ('+w(cnt[top[1]])+').':'.')+(hasPeer?(Math.abs(share(comm)-share(peer))<=5?' Peers tripped screens at a similar rate, so a flag by itself does not make a bank unusual.':share(comm)>share(peer)?' Arizona community banks tripped screens more often than peers.':' Arizona community banks tripped screens less often than peers.'):''):'']);
+ if(giants.length)g2.push([cap(w(giants.length))+' bank'+(giants.length>1?'s':'')+' hold'+(giants.length>1?'':'s')+' '+Math.round(100*gg/tt)+'% of the assets.','That concentration is why the giants are compared with the ten largest banks and the rest with similar-sized peers.']);
+ if(bt){g3.push([bt.head.replace('Back-test: ',''),'Test of '+bt.window.failed_n+' failures in the '+bt.window.name+' against '+bt.window.survivor_obs+' survivor observations. Two or more screens fired for '+Math.round(bt.window.failed_2plus)+'% of failures and '+Math.round(bt.window.survivors_2plus)+'% of survivors.']);
+  var sg2=signal(BT);if(sg2)g3.push(sg2);
+  var rr=BT.windows.filter(function(x){return x.id==='recent'})[0];if(rr&&rr.failed_any!=null)g3.push([rr.failed_any-rr.survivors_any>=10?'The pattern holds in the recent rate shock, with fewer cases.':'The screens were less informative in the recent rate shock.',Math.round(rr.failed_any)+'% of '+rr.failed_n+' failures from '+rr.name+' tripped a screen, against '+Math.round(rr.survivors_any)+'% of survivors.'])}
+ groups.push({title:'Peer comparison',items:g1,table:true});groups.push({title:'What the screens flag',items:g2});if(g3.length)groups.push({title:'Do the screens work?',items:g3});
+ out.tiles=tiles;out.groups=groups;
  out.items=items;
  out.headline=cap(w(nfA))+' of '+w(az.length)+' Arizona banks tripped a screen in '+ql+'; '+(hasPeer?'community-bank ROA '+pc(L(comm,'roa'))+' vs '+pc(L(peer,'roa'))+' at similar-sized peers.':'median ROA '+pc(L(az,'roa'))+' vs '+pc(L(big,'roa'))+' at the largest banks.');
  out.card=cap(w(nfA))+' of '+w(az.length)+' Arizona banks tripped at least one warning screen in '+ql+'. '+(hasPeer?'Community-bank median ROA was '+pc(L(comm,'roa'))+', against '+pc(L(peer,'roa'))+' for similar-sized peers and '+pc(L(big,'roa'))+' for the ten largest banks.':'Median ROA was '+pc(L(az,'roa'))+' against '+pc(L(big,'roa'))+' for the ten largest banks.')+(bt?' '+bt.short:'');
