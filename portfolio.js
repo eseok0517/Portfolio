@@ -49,13 +49,13 @@ async function bankCard(){
  const med=a=>{a=a.filter(x=>x!=null&&isFinite(x)).sort((x,y)=>x-y);const m=a.length>>1;return a.length%2?a[m]:(a[m-1]+a[m])/2};
  const az=D.banks.filter(b=>b.group==='az').sort((a,b)=>last(b).assets-last(a).assets),big=D.banks.filter(b=>b.group==='big');
  if(az.length<3||big.length<3)return;
- const rows=[...az].sort((a,b)=>flags(b).length-flags(a).length||last(b).assets-last(a).assets).slice(0,4);
+ const rows=[...az].sort((a,b)=>flags(b).length-flags(a).length||last(b).assets-last(a).assets).slice(0,2);
  document.getElementById('bank-viz').outerHTML='<div class="bk-rows" id="bank-viz"><div style="background:#f3f7f5;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)"><span>Most flagged banks</span><em>ROA</em></div>'+rows.map(b=>{const f=flags(b);return `<div><span><b>${b.name.replace(/, N\.A\.| National Association/,'')}</b><span class="bk-chips">${f.length?f.map(x=>'<i>'+x+'</i>').join(''):'<i class="ok">No flags</i>'}</span></span><em>${last(b).roa==null?'—':last(b).roa.toFixed(2)+'%'}</em></div>`}).join('')+'</div>';
  const F=Findings.bank(D,BT);
- if(F){document.getElementById('bank-finding').textContent=F.card;const c=document.getElementById('bank-result');if(c)c.textContent=F.headline}
+ if(F){const bf=document.getElementById('bank-finding');if(bf)bf.textContent=F.card;const c=document.getElementById('bank-result');if(c)c.textContent=F.headline}
 }
 async function equityFinding(){
  const d=await Findings.load('data/equities.json');if(!d)return;const F=Findings.equity(d);if(!F)return;
- document.getElementById('eq-finding').textContent=F.card;const c=document.getElementById('eq-result');if(c)c.textContent=F.headline;
+ const ef=document.getElementById('eq-finding');if(ef)ef.textContent=F.card;const c=document.getElementById('eq-result');if(c)c.textContent=F.headline;
 }
 bankCard().catch(()=>{});equityFinding().catch(()=>{});

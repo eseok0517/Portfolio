@@ -106,7 +106,7 @@ function backtest(BT){
 function signal(BT){var c=BT.windows.filter(function(x){return x.id==='crisis'})[0];if(!c||!c.sweep)return null;
  var rows=[];var CK={'Low ROA':'roa','Margin squeeze':'dnim','Thin equity':'eq','High loans/deposits':'ld','Deposit outflow':'ddep','Asset quality':'nc'};Object.keys(CK).forEach(function(k){var s=(c.sweep[k]||[]).filter(function(r){return r.cutoff===CUT[CK[k]]})[0];if(s&&s.failed!=null&&s.survivors!=null)rows.push({k:k,gap:s.failed-s.survivors,f:s.failed,s:s.survivors})});
  if(rows.length<3)return null;rows.sort(function(a,b){return b.gap-a.gap});var t=rows[0],u=rows[rows.length-1];
- return ['Some screens carried the signal; others did not.',t.k+' separated failures from survivors best ('+Math.round(t.f)+'% of failures against '+Math.round(t.s)+'% of survivors). '+u.k+' separated them least ('+Math.round(u.f)+'% against '+Math.round(u.s)+'%), which makes it the weakest screen on its own. The cutoff table below shows how each screen behaves at other cutoffs.']}
+ return ['Some screens carried the signal; others did not.',t.k+' separated failures from survivors best ('+Math.round(t.f)+'% of failures against '+Math.round(t.s)+'% of survivors). '+u.k+' separated them least ('+Math.round(u.f)+'% against '+Math.round(u.s)+'%), which makes it the weakest screen on its own. The bank monitor’s cutoff table shows how each screen behaves at other cutoffs.']}
 function equity(d){
  var n=d.months.length,P={};d.tickers.forEach(function(t){P[t.symbol]=t.prices});var c=d.macro.curve,cpi=d.macro.cpi_yoy;
  if(!P.NVDA||!P.SPY||!P.JPM||!P.GS||!P.TLT)return null;
@@ -129,7 +129,7 @@ function equity(d){
  if([a1,a2,b1,b2].every(function(x){return x!=null}))items.push(['Banks did best after the yield curve inverted.','Average 12-month returns after an inverted curve were '+R(a1)+'% for JPMorgan and '+R(a2)+'% for Goldman Sachs, against '+R(b1)+'% and '+R(b2)+'% after a normal curve, but this rests on only '+w(eps)+' inversion episode'+(eps===1?'':'s')+'.']);
  var h=avg(spy,true),l=avg(spy,false),xh=avg(xom,true),xl=avg(xom,false);
  if([h,l].every(function(x){return x!=null}))items.push(['Inflation separated the winners.','After high-inflation months SPY averaged '+h.toFixed(1)+'% against '+l.toFixed(1)+'% after low-inflation months.'+(xh!=null&&xl!=null?' Exxon did '+(xh>xl?'better':'worse')+' in high inflation ('+xh.toFixed(1)+'% vs '+xl.toFixed(1)+'%).':'')]);
- return {items:items,period:y+' to '+end,
+ return {items:items,eps:eps,period:y+' to '+end,
   card:'Higher returns came with deeper losses: NVIDIA returned '+R(cagr('NVDA'))+'% a year since '+y+' but fell '+R(mdd('NVDA'))+'% at its worst, versus '+R(cagr('SPY'))+'% a year and a '+R(mdd('SPY'))+'% drop for SPY.'+(a1!=null?' After the yield curve inverted, JPMorgan and Goldman Sachs averaged '+R(a1)+'% and '+R(a2)+'% over the next year, against '+R(b1)+'% and '+R(b2)+'% otherwise.':''),
   headline:'NVIDIA returned '+R(cagr('NVDA'))+'% a year with a '+R(mdd('NVDA'))+'% drawdown vs '+R(cagr('SPY'))+'% and '+R(mdd('SPY'))+'% for SPY; banks led after yield-curve inversions.'}}
 

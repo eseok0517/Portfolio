@@ -164,3 +164,20 @@ table.summary{width:100%;border-collapse:collapse;font-size:13px;min-width:760px
 .scale-strip span{opacity:1;color:var(--muted);margin-top:4px}
 .scale-strip div:nth-child(n+3){border-top:1px solid var(--border)}
 @media(min-width:900px){.scale-strip{grid-template-columns:repeat(4,1fr)}.scale-strip div:nth-child(3){border-left:1px solid var(--border)}.scale-strip div:nth-child(n+3){border-top:0}}
+
+.pgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.pcard{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
+.pcard:hover{transform:translateY(-3px);border-color:var(--accent)}
+.pvis{display:block;height:270px;overflow:hidden;padding:16px 18px;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+.pvis.bank-visual{background:#eef2ef}
+.pvis .macro-chart svg{width:100%;height:auto;display:block}
+.pvis .asset-example{display:grid;gap:12px;margin-top:10px}
+.pvis .bk-rows{margin-top:6px}
+.pbody{display:flex;flex-direction:column;gap:10px;padding:20px;flex:1}
+.pbody h3{font-size:20px;margin:0}
+.presult{font-weight:650;font-size:15px;line-height:1.5;margin:0;color:var(--text)}
+.pdesc{font-size:13.5px;color:var(--muted);margin:0;line-height:1.55}
+.pmore{margin-top:auto;font-size:12px;font-weight:700;color:var(--accent);text-decoration:none}
+.pmore:hover{text-decoration:underline}
+.pbody .badge{align-self:flex-start}
+@media(max-width:1000px){.pgrid{grid-template-columns:minmax(0,1fr)}.pvis{height:auto;min-height:220px}}
