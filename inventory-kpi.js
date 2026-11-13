@@ -112,7 +112,7 @@ function render(){
 
  // ABC
  var ab={A:[0,0],B:[0,0],C:[0,0]},tv=0;L.forEach(function(o){ab[o.abc][0]++;ab[o.abc][1]+=o.issuedVal;tv+=o.issuedVal});
- var AC={A:'var(--accent)',B:'#6f9e8c',C:'#c5d6cf'};
+ var AC={A:'var(--accent)',B:'#958478',C:'#d3ccc8'};
  $('abc').innerHTML='<div class="stack" role="img" aria-label="Share of issued value by class">'+['A','B','C'].map(function(k){return '<i style="width:'+(tv?ab[k][1]/tv*100:0)+'%;background:'+AC[k]+'"></i>'}).join('')+'</div><div class="legend">'+['A','B','C'].map(function(k){return '<span><u style="background:'+AC[k]+'"></u>Class '+k+': '+ab[k][0]+' items, '+(tv?Math.round(ab[k][1]/tv*100):0)+'% of value</span>'}).join('')+'</div>';
  $('abcNote').textContent='Class A items deserve the tightest reorder points and the most frequent counts. Ranked by '+(hasCost?'issued value':'issued units')+' in the last '+state.win+' days.';
 
@@ -121,9 +121,9 @@ function render(){
  state.rows.forEach(function(r){if(r.a==='ISSUE'){var w=Math.floor(r.t/(7*DAY))-w0;wk[w]=(wk[w]||0)+r.q}});
  var wl=Math.floor(state.asof/(7*DAY))-w0,vals=[];for(var i=0;i<=wl;i++)vals.push(wk[i]||0);
  var W=640,H=200,pl=40,pb=22,pt=8,n=vals.length,vm=Math.max.apply(null,vals)||1,bw=(W-pl)/n,svg='';
- for(var g=0;g<=4;g++){var y=pt+(H-pb-pt)*(1-g/4);svg+='<line x1="'+pl+'" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="#dde5e1"/><text x="'+(pl-6)+'" y="'+(y+4)+'" font-size="10" text-anchor="end" fill="#55655f">'+fmt(vm*g/4)+'</text>'}
- vals.forEach(function(v,i){var h=(H-pb-pt)*v/vm,x=pl+i*bw+bw*.15,last=i===n-1;svg+='<rect x="'+x+'" y="'+(H-pb-h)+'" width="'+bw*.7+'" height="'+h+'" fill="'+(last?'#9fc1b3':'#1a6247')+'"><title>Week of '+new Date((w0+i)*7*DAY).toLocaleDateString('en-US',{month:'short',day:'numeric'})+': '+v+' units'+(last?' (partial week)':'')+'</title></rect>'});
- [0,Math.floor(n/2),n-1].forEach(function(i){svg+='<text x="'+(pl+i*bw+bw/2)+'" y="'+(H-6)+'" font-size="10" text-anchor="middle" fill="#55655f">'+new Date((w0+i)*7*DAY).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</text>'});
+ for(var g=0;g<=4;g++){var y=pt+(H-pb-pt)*(1-g/4);svg+='<line x1="'+pl+'" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="#e3e1df"/><text x="'+(pl-6)+'" y="'+(y+4)+'" font-size="10" text-anchor="end" fill="#625c58">'+fmt(vm*g/4)+'</text>'}
+ vals.forEach(function(v,i){var h=(H-pb-pt)*v/vm,x=pl+i*bw+bw*.15,last=i===n-1;svg+='<rect x="'+x+'" y="'+(H-pb-h)+'" width="'+bw*.7+'" height="'+h+'" fill="'+(last?'#baaea6':'#c6551c')+'"><title>Week of '+new Date((w0+i)*7*DAY).toLocaleDateString('en-US',{month:'short',day:'numeric'})+': '+v+' units'+(last?' (partial week)':'')+'</title></rect>'});
+ [0,Math.floor(n/2),n-1].forEach(function(i){svg+='<text x="'+(pl+i*bw+bw/2)+'" y="'+(H-6)+'" font-size="10" text-anchor="middle" fill="#625c58">'+new Date((w0+i)*7*DAY).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</text>'});
  $('trend').innerHTML='<svg class="trend" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Weekly units issued">'+svg+'</svg>';
  $('trendNote').textContent='Each bar is one calendar week of issues. The lighter last bar may be a partial week.';
 
