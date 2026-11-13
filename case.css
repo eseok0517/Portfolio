@@ -10,7 +10,7 @@
 .cs .steps b{display:block;color:var(--text);font-size:15px}
 .cs .kf{list-style:none;margin:0;padding:0;display:grid;gap:12px}.cs .kf li{border-left:3px solid var(--accent);padding:2px 0 2px 14px;font-size:14.5px;line-height:1.55;color:var(--muted)}.cs .kf li b{display:block;color:var(--text);font-size:15px;margin-bottom:2px}
 .cs .fg{margin:0 0 20px}.cs .fg h3{font-family:inherit;font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.cs .btns{display:flex;gap:12px;flex-wrap:wrap}.cs .btns a{display:inline-block;font-weight:700;font-size:13px;padding:10px 16px;border-radius:5px;border:1px solid #cac5c2;color:var(--accent);text-decoration:none;background:#fff}.cs .btns a.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.cs .btns{display:flex;gap:12px;flex-wrap:wrap}.cs .btns a{display:inline-block;font-weight:700;font-size:13px;padding:10px 16px;border-radius:5px;border:1px solid #cac2c3;color:var(--accent);text-decoration:none;background:#fff}.cs .btns a.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .cs .nextp{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:18px;font-size:14px}
 @media(max-width:800px){.cs .two{grid-template-columns:minmax(0,1fr);gap:10px}}
 .cs .kf{background:none;border:0;box-shadow:none;padding:0;border-radius:0}
@@ -27,6 +27,6 @@
 .cs .steps li:before{left:16px;top:16px}
 .cs .panel .kf li{background:#f8f7f7;border-radius:0 6px 6px 0;padding:10px 14px}
 .cs .panel .fg{margin:0 0 22px}.cs .panel .fg:last-child{margin-bottom:0}
-.cs .tryit{background:#f5f3f2;border-color:#ddd6d2;display:flex;flex-direction:column}
+.cs .tryit{background:#f5f2f2;border-color:#ddd2d4;display:flex;flex-direction:column}
 .cs .tryit .btns{margin-top:4px;flex-direction:column;align-items:stretch}.cs .tryit .btns a{text-align:center}
 @media(max-width:800px){.cs .grid2,.cs .steps{grid-template-columns:minmax(0,1fr)}.cs .panel{padding:22px 20px}}
