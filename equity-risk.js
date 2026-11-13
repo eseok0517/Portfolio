@@ -116,3 +116,5 @@ function init(){
 }
 init();
 })();
+
+Findings.load('data/equities.json').then(function(d){if(!d)return;var F=Findings.equity(d);if(F&&document.getElementById('kf')){document.getElementById('kf').innerHTML=Findings.list(F.items);document.getElementById('kfH').textContent='Findings ('+F.period.replace(' to ',' to ')+')'}});

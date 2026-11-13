@@ -29,6 +29,10 @@ jobs:
         continue-on-error: true
         run: python scripts/fetch_banks.py --out data
 
+      - name: Back-test the bank warning screens against FDIC failures
+        continue-on-error: true
+        run: python scripts/fetch_backtest.py --out data
+
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"

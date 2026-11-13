@@ -55,19 +55,11 @@ async function bankCard(){
  if(az.length<3||big.length<3)return;
  const rows=[...az].sort((a,b)=>flags(b).length-flags(a).length||last(b).assets-last(a).assets).slice(0,4);
  document.getElementById('bank-viz').outerHTML='<div class="bk-rows" id="bank-viz"><div style="background:#f3f7f5;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)"><span>Most flagged banks</span><em>ROA</em></div>'+rows.map(b=>{const f=flags(b);return `<div><span><b>${b.name.replace(/, N\.A\.| National Association/,'')}</b><span class="bk-chips">${f.length?f.map(x=>'<i>'+x+'</i>').join(''):'<i class="ok">No flags</i>'}</span></span><em>${last(b).roa==null?'—':last(b).roa.toFixed(2)+'%'}</em></div>`}).join('')+'</div>';
- const nf=az.filter(b=>flags(b).length).length,q=last(az[0]).date,lbl='Q'+Math.ceil(+q.slice(4,6)/3)+' '+q.slice(0,4);
- const loans=b=>last(b).loans_dep,words=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
- const w=n=>words[n]||n,cap=t=>t[0].toUpperCase()+t.slice(1);
- document.getElementById('bank-finding').textContent=`${cap(w(nf))} of ${w(az.length)} Arizona banks tripped at least one warning screen in ${lbl}. Their median return on assets was ${med(az.map(b=>last(b).roa)).toFixed(2)}% against ${med(big.map(b=>last(b).roa)).toFixed(2)}% for the ten largest banks, and they lent out ${Math.round(med(az.map(loans)))}% of deposits against ${Math.round(med(big.map(loans)))}%.`;
+ const BT=await Findings.load('data/backtest.json'),F=Findings.bank(D,BT);
+ if(F){document.getElementById('bank-finding').textContent=F.card;const c=document.getElementById('bank-result');if(c)c.textContent=F.headline}
 }
 async function equityFinding(){
- const r=await fetch('data/equities.json',{cache:'no-store'});if(!r.ok)return;const d=await r.json(),n=d.months.length;
- const P=Object.fromEntries(d.tickers.map(t=>[t.symbol,t.prices])),c=d.macro.curve;
- if(!P.NVDA||!P.SPY||!P.JPM||!P.GS)return;
- const yrs=s=>(n-1)/12,cagr=s=>((P[s].at(-1)/P[s][0])**(1/yrs(s))-1)*100,mdd=s=>{let pk=0,m=0;P[s].forEach(v=>{if(v){pk=Math.max(pk,v);m=Math.min(m,v/pk-1)}});return-m*100};
- const fwd=(s,inv)=>{const v=[];for(let i=0;i+12<n;i++){if(c[i]==null||(c[i]<0)!==inv||!P[s][i]||!P[s][i+12])continue;v.push((P[s][i+12]/P[s][i]-1)*100)}return v.length?v.reduce((a,b)=>a+b)/v.length:null};
- const f=[cagr('NVDA'),mdd('NVDA'),cagr('SPY'),mdd('SPY'),fwd('JPM',true),fwd('GS',true),fwd('JPM',false),fwd('GS',false)];if(f.some(x=>x==null||!isFinite(x)))return;
- const y=d.months[0].slice(0,4),R=Math.round;
- document.getElementById('eq-finding').textContent=`Higher returns came with deeper losses: NVIDIA returned ${R(f[0])}% a year since ${y} but fell ${R(f[1])}% at its worst, versus ${R(f[2])}% a year and a ${R(f[3])}% drop for SPY. After the yield curve inverted, JPMorgan and Goldman Sachs averaged ${R(f[4])}% and ${R(f[5])}% over the next year, against ${R(f[6])}% and ${R(f[7])}% otherwise.`;
+ const d=await Findings.load('data/equities.json');if(!d)return;const F=Findings.equity(d);if(!F)return;
+ document.getElementById('eq-finding').textContent=F.card;const c=document.getElementById('eq-result');if(c)c.textContent=F.headline;
 }
 bankCard().catch(()=>{});equityFinding().catch(()=>{});

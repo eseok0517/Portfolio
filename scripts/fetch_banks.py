@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Download quarterly call-report data from the FDIC BankFind API (public) for banks headquartered in
-Arizona and for the ten largest U.S. banks, and write data/banks.json for the Bank Health Monitor.
+Arizona, for the ten largest U.S. banks, and for a size-matched peer group of banks in neighboring states, and write data/banks.json for the Bank Health Monitor.
 
 API: https://api.fdic.gov/banks  (endpoints /institutions and /financials). Unknown field names are
 silently dropped by the API, so optional ratios are stored as null when absent.
@@ -62,6 +62,23 @@ def institutions_live():
     return az, big
 
 
+PEER_STATES = {"NM", "NV", "UT", "CO", "TX"}
+
+
+def peers_live(n=30):
+    """Similar-sized comparison banks: active, $70M to $1.5B in assets, headquartered in neighboring states."""
+    try:
+        r = rows(get("institutions", {"filters": "ACTIVE:1 AND ASSET:[70000 TO 1500000]", "fields": ",".join(INST_FIELDS), "sort_by": "ASSET", "sort_order": "DESC", "limit": 10000, "format": "json"}))
+    except Exception as e:  # noqa: BLE001
+        print(f"peer group unavailable: {e}", file=sys.stderr)
+        return []
+    pool = sorted((x for x in r if x.get("STALP") in PEER_STATES), key=lambda x: num(x.get("ASSET")) or 0)
+    if len(pool) <= n:
+        return pool
+    step = (len(pool) - 1) / (n - 1)
+    return [pool[round(i * step)] for i in range(n)]
+
+
 def financials_live(cert):
     return rows(get("financials", {"filters": f"CERT:{cert}", "fields": ",".join(FIN_FIELDS), "sort_by": "REPDTE", "sort_order": "DESC", "limit": QUARTERS, "format": "json"}))
 
@@ -96,14 +113,23 @@ def main():
     else:
         az, big = institutions_live()
         fin = financials_live
+    peer = [] if args.fixture else peers_live()
+    if args.fixture:
+        peer = fx["institutions"].get("peer", [])
     banks, seen = [], set()
-    for group, lst in (("az", az), ("big", big)):
+    for group, lst in (("az", az), ("big", big), ("peer", peer)):
         for inst in lst:
             c = str(inst.get("CERT"))
             if c in seen:
                 continue
             seen.add(c)
-            b = build_bank(inst, "az" if group == "az" else "big", fin(c))
+            try:
+                b = build_bank(inst, group, fin(c))
+            except Exception as e:  # noqa: BLE001
+                if group == "az" or group == "big":
+                    raise
+                print(f"skipping peer {c}: {e}", file=sys.stderr)
+                continue
             if len(b["quarters"]) >= 4:
                 banks.append(b)
             if not args.fixture:
@@ -116,7 +142,7 @@ def main():
     os.makedirs(args.out, exist_ok=True)
     with open(os.path.join(args.out, "banks.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, separators=(",", ":"))
-    print(f"Wrote {len(banks)} banks ({n_az} Arizona) to {args.out}/banks.json")
+    print(f"Wrote {len(banks)} banks ({n_az} Arizona, {sum(1 for b in banks if b['group'] == 'peer')} peers) to {args.out}/banks.json")
 
 
 if __name__ == "__main__":
