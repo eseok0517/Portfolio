@@ -14,3 +14,19 @@
 .cs .nextp{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:18px;font-size:14px}
 @media(max-width:800px){.cs .two{grid-template-columns:minmax(0,1fr);gap:10px}}
 .cs .kf{background:none;border:0;box-shadow:none;padding:0;border-radius:0}
+
+.cs .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:stretch}
+.cs .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:26px 28px;box-shadow:var(--shadow)}
+.cs .panel .num{font-size:11px;font-weight:750;letter-spacing:.14em;color:var(--accent);margin:0 0 6px}
+.cs .panel h2{font-size:22px;margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.cs .panel p{margin:0 0 12px;color:var(--muted);font-size:15.5px;line-height:1.65}
+.cs .panel p.num{font-size:11px;margin:0 0 6px}
+.cs .panel p:last-child{margin-bottom:0}
+.cs .steps{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cs .steps li{background:#f6f9f7;border:1px solid var(--border);border-radius:8px;padding:16px 18px 16px 58px}
+.cs .steps li:before{left:16px;top:16px}
+.cs .panel .kf li{background:#f6f9f7;border-radius:0 6px 6px 0;padding:10px 14px}
+.cs .panel .fg{margin:0 0 22px}.cs .panel .fg:last-child{margin-bottom:0}
+.cs .tryit{background:#f1f6f3;border-color:#cfe0d7;display:flex;flex-direction:column}
+.cs .tryit .btns{margin-top:4px;flex-direction:column;align-items:stretch}.cs .tryit .btns a{text-align:center}
+@media(max-width:800px){.cs .grid2,.cs .steps{grid-template-columns:minmax(0,1fr)}.cs .panel{padding:22px 20px}}
